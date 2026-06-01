@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --color-red-50: oklch(.971 .013 17.38);
+  --color-red-100: oklch(.936 .032 17.717);
+  --color-red-600: oklch(.577 .245 27.325);
+  --color-red-700: oklch(.505 .213 27.518);
+  --color-orange-50: oklch(.98 .016 73.684);
+  --color-orange-100: oklch(.954 .038 75.164);
+  --color-orange-200: oklch(.901 .076 70.697);
+  --color-orange-300: oklch(.837 .128 66.29);
+  --color-orange-400: oklch(.75 .183 55.934);
+  --color-orange-500: oklch(.705 .213 47.604);
+  --color-orange-600: oklch(.646 .222 41.116);
+  --color-orange-700: oklch(.553 .195 38.402);
+  --color-orange-900: oklch(.408 .123 38.172);
+  --color-yellow-50: oklch(.987 .026 102.212);
+  --color-yellow-100: oklch(.973 .071 103.193);
+  --color-yellow-200: oklch(.945 .129 101.54);
+  --color-yellow-300: oklch(.905 .182 98.111);
+  --color-yellow-400: oklch(.852 .199 91.936);
+  --color-yellow-50: oklch(.987 .026 102.212);
+  --color-yellow-100: oklch(.973 .071 103.193);
+  --color-yellow-200: oklch(.945 .129 101.54);
+  --color-yellow-300: oklch(.905 .182 98.111);
+  --color-yellow-400: oklch(.852 .199 91.936);
+  --color-yellow-500: oklch(.795 .184 86.047);
+  --color-yellow-600: oklch(.681 .162 75.834);
+  --color-yellow-700: oklch(.554 .135 66.442);
+  --color-green-100: oklch(.962 .044 156.743);
+  --color-green-400: oklch(.792 .209 151.711);
+  --color-green-500: oklch(.723 .219 149.579);
+  --color-green-600: oklch(.627 .194 149.214);
+  --color-green-700: oklch(.527 .154 150.069);
+  --color-teal-500: oklch(.704 .14 182.503);
+  --color-teal-600: oklch(.6 .118 184.704);
+  --color-cyan-500: oklch(.715 .143 215.221);
+  --color-cyan-600: oklch(.609 .126 221.723);
+  --color-blue-50: oklch(.97 .014 254.604);
+  --color-blue-100: oklch(.932 .032 255.585);
+  --color-blue-300: oklch(.809 .105 251.813);
+  --color-blue-400: oklch(.707 .165 254.624);
+  --color-blue-500: oklch(.623 .214 259.815);
+  --color-blue-600: oklch(.546 .245 262.881);
+  --color-blue-700: oklch(.488 .243 264.376);
+  --color-indigo-50: oklch(.962 .018 272.314);
+  --color-indigo-100: oklch(.93 .034 272.788);
+  --color-indigo-500: oklch(.627 .265 303.9);
+  --color-indigo-600: oklch(.585 .233 277.117);
+  --color-purple-50: oklch(.977 .014 308.299);
+  --color-purple-100: oklch(.946 .033 307.174);
+  --color-purple-200: oklch(.88 .062 308.84);
+  --color-purple-300: oklch(.795 .112 309.326);
+  --color-purple-400: oklch(.692 .165 311.237);
+  --color-purple-500: oklch(.627 .265 303.9);
+  --color-purple-600: oklch(.558 .288 302.321);
+  --color-purple-700: oklch(.496 .265 301.365);
+  --color-pink-50: oklch(.971 .014 343.198);
+  --color-pink-100: oklch(.948 .028 342.258);
+  --color-pink-400: oklch(.718 .202 349.761);
+  --color-pink-500: oklch(.656 .241 354.308);
+  --color-pink-600: oklch(.592 .249 .584);
+  --color-slate-50: oklch(.984 .003 247.858);
+  --color-slate-100: oklch(.968 .007 247.896);
+  --color-slate-200: oklch(.929 .013 255.508);
+  --color-slate-300: oklch(.869 .022 252.894);
+  --color-slate-400: oklch(.704 .04 256.788);
+  --color-slate-500: oklch(.554 .046 257.417);
+  --color-slate-600: oklch(.446 .043 257.281);
+  --color-slate-700: oklch(.372 .044 257.287);
+  --color-slate-800: oklch(.279 .041 260.031);
+  --color-slate-900: oklch(.208 .042 265.755);
+  --color-gray-50: oklch(.985 .002 247.839);
+  --color-gray-100: oklch(.967 .003 264.542);
+  --color-gray-200: oklch(.928 .006 264.531);
+  --color-gray-300: oklch(.872 .01 258.338);
+  --color-gray-400: oklch(.709 .019 266.385);
+  --color-gray-50: oklch(.985 .002 247.839);
+  --color-gray-500: oklch(.551 .027 264.364);
+  --color-gray-600: oklch(.446 .03 256.802);
+  --color-gray-700: oklch(.369 .033 258.281);
+  --color-gray-800: oklch(.278 .033 256.848);
+  --color-gray-900: oklch(.21 .034 264.665);
+  --color-zinc-100: oklch(.967 .001 286.375);
+  --color-zinc-400: oklch(.713 .013 286.067);
+  --color-zinc-500: oklch(.558 .021 284.428);
+  --color-zinc-600: oklch(.448 .024 285.786);
+  --color-zinc-900: oklch(.208 .034 285.517);
+  --color-neutral-50: oklch(.985 0 0);
+}
+
+/* Force body background to be slate-950 for the premium theme */
+body, html, #root {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  color: #0f172a;
+}
+
+.dark body, .dark html, .dark #root {
+  background-color: #020617;
+  color: white;
+}
+
+:root:not(.dark) #app-container .bg-slate-950 { background-color: #f8fafc; }
+:root:not(.dark) #app-container .bg-slate-950\/80 { background-color: rgba(255, 255, 255, 0.85); }
+:root:not(.dark) #app-container .bg-slate-900 { background-color: #f1f5f9; }
+:root:not(.dark) #app-container .bg-slate-900\/95 { background-color: rgba(241, 245, 249, 0.95); }
+:root:not(.dark) #app-container .bg-slate-800 { background-color: #e2e8f0; }
+
+:root:not(.dark) #app-container .bg-white\/5 { background-color: rgba(15, 23, 42, 0.05); }
+:root:not(.dark) #app-container .bg-white\/10 { background-color: rgba(15, 23, 42, 0.1); }
+:root:not(.dark) #app-container .bg-white\/20 { background-color: rgba(15, 23, 42, 0.15); }
+:root:not(.dark) #app-container .bg-white\/30 { background-color: rgba(15, 23, 42, 0.2); }
+:root:not(.dark) #app-container .bg-white\/40 { background-color: rgba(15, 23, 42, 0.25); }
+
+:root:not(.dark) #app-container .border-white\/5 { border-color: rgba(15, 23, 42, 0.08); }
+:root:not(.dark) #app-container .border-white\/10 { border-color: rgba(15, 23, 42, 0.12); }
+:root:not(.dark) #app-container .border-white\/20 { border-color: rgba(15, 23, 42, 0.2); }
+
+:root:not(.dark) #app-container .text-white { color: #0f172a; }
+:root:not(.dark) #app-container .text-white\/90 { color: rgba(15, 23, 42, 0.9); }
+:root:not(.dark) #app-container .text-white\/80 { color: rgba(15, 23, 42, 0.8); }
+:root:not(.dark) #app-container .text-white\/70 { color: rgba(15, 23, 42, 0.7); }
+:root:not(.dark) #app-container .text-white\/60 { color: rgba(15, 23, 42, 0.6); }
+:root:not(.dark) #app-container .text-white\/50 { color: rgba(15, 23, 42, 0.5); }
+:root:not(.dark) #app-container .text-white\/40 { color: rgba(15, 23, 42, 0.45); }
+:root:not(.dark) #app-container .text-white\/30 { color: rgba(15, 23, 42, 0.35); }
+:root:not(.dark) #app-container .text-white\/20 { color: rgba(15, 23, 42, 0.25); }
+:root:not(.dark) #app-container .text-white\/10 { color: rgba(15, 23, 42, 0.2); }
+
+:root:not(.dark) #app-container .from-slate-900 { --tw-gradient-from: #f1f5f9 var(--tw-gradient-from-position); --tw-gradient-to: rgba(241, 245, 249, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+:root:not(.dark) #app-container .to-slate-950 { --tw-gradient-to: #f8fafc var(--tw-gradient-to-position); }
+
+@keyframes fade-in {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(12px) }
+  to { opacity: 1; transform: translateY(0) }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%) }
+  to { transform: translateY(0) }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95) }
+  to { opacity: 1; transform: scale(1) }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0 }
+  100% { background-position: 200% 0 }
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0) }
+  50% { transform: translateY(-10px) }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) }
+  25% { transform: translateX(-4px) }
+  75% { transform: translateX(4px) }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1 }
+  50% { opacity: 0.7 }
+}
+
+.animate-fade-in { animation: fade-in .5s ease-out both }
+.animate-fade-in-up { animation: fade-in-up .6s cubic-bezier(0.16, 1, 0.3, 1) both }
+.animate-slide-up { animation: slide-up .5s cubic-bezier(0.16, 1, 0.3, 1) both }
+.animate-scale-in { animation: scale-in .4s cubic-bezier(0.16, 1, 0.3, 1) both }
+.animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite }
+.animate-shake { animation: shake 0.4s ease-in-out }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite }
+
+.animate-delay-100 { animation-delay: .1s }
+.animate-delay-200 { animation-delay: .2s }
+.animate-delay-300 { animation-delay: .3s }
+.animate-delay-400 { animation-delay: .4s }
+.animate-delay-500 { animation-delay: .5s }
+
+.shimmer {
+  background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,.1) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.glass-card {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10;
+}
+
+.premium-card {
+  @apply bg-slate-900/50 backdrop-blur-xl rounded-[2.5rem] border border-white/5 shadow-2xl;
+}
+
+.premium-gradient {
+  @apply bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600;
+}
+
+.premium-shadow {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
