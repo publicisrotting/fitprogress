@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Dumbbell, Zap, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Dumbbell, Zap, CheckCircle, Repeat, Layers, Grid3x3, Flame } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
@@ -15,7 +15,7 @@ const TEMPLATES = [
     days: 6,
     level: 'intermediate',
     color: 'var(--accent-move)',
-    emoji: '💪',
+    Icon: Repeat,
     program: [
       { name: 'Push A (Груди/Плечі/Трицепс)', exercises: [
         { nameKey: 'benchPress', sets: 4, reps: '8-10', muscle: 'chest' },
@@ -68,7 +68,7 @@ const TEMPLATES = [
     days: 4,
     level: 'beginner',
     color: 'var(--accent-stand)',
-    emoji: '🏋️',
+    Icon: Layers,
     program: [
       { name: 'Upper A', exercises: [
         { nameKey: 'benchPress', sets: 4, reps: '6-8', muscle: 'chest' },
@@ -106,7 +106,7 @@ const TEMPLATES = [
     days: 3,
     level: 'beginner',
     color: 'var(--accent-exercise)',
-    emoji: '🌟',
+    Icon: Grid3x3,
     program: [
       { name: 'Full Body A', exercises: [
         { nameKey: 'squats', sets: 3, reps: '8', muscle: 'legs' },
@@ -138,7 +138,7 @@ const TEMPLATES = [
     days: 3,
     level: 'intermediate',
     color: 'var(--accent-energy)',
-    emoji: '⚡',
+    Icon: Flame,
     program: [
       { name: 'Тренування A', exercises: [
         { nameKey: 'squats', sets: 5, reps: '5', muscle: 'legs' },
@@ -235,12 +235,12 @@ export default function WorkoutTemplatesScreen({ onNavigate }: Props) {
 
       <div className="px-5 space-y-4">
         {TEMPLATES.map(tpl => (
-          <div key={tpl.id} className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+          <div key={tpl.id} className="rounded-3xl overflow-hidden" style={{ background: 'var(--bg-card)', boxShadow: '0 2px 16px rgba(40,32,56,0.06)' }}>
             {/* Header */}
             <button onClick={() => setExpanded(expanded === tpl.id ? null : tpl.id)}
               className="w-full flex items-center gap-4 px-4 py-4 text-left active:opacity-70">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0" style={{ background: tpl.color + '15' }}>
-                {tpl.emoji}
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: tpl.color + '1A' }}>
+                <tpl.Icon className="w-7 h-7" style={{ color: tpl.color }} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold apple-text text-base">{tpl.name}</p>

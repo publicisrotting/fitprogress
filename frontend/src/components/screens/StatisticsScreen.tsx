@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Award, TrendingUp, Calendar, Dumbbell, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Award, TrendingUp, Calendar, Dumbbell, ChevronRight, Trophy } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
@@ -203,7 +203,9 @@ export default function StatisticsScreen({ onNavigate, showHeader = true }: { on
               {stats.personalRecords.map((rec: any, i: number) => (
                 <div key={i} className="flex items-center gap-4 px-4 py-3.5"
                   style={{ borderBottom: i < stats.personalRecords.length - 1 ? '0.5px solid var(--separator)' : 'none' }}>
-                  <span className="text-xl">🏆</span>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-energy)1A' }}>
+                    <Trophy className="w-5 h-5" style={{ color: 'var(--accent-energy)' }} />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium apple-text truncate">{rec.exercise}</p>
                     <p className="text-xs apple-text-3 mt-0.5">{rec.date}</p>

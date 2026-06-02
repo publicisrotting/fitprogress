@@ -1,4 +1,4 @@
-import { Edit2, Settings, LogOut, Trophy, Calendar, TrendingUp, Bell, Crown, Shield, Camera } from 'lucide-react';
+import { Edit2, Settings, LogOut, Trophy, Calendar, TrendingUp, Bell, Crown, Shield, Camera, Scale, Users, Download, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -31,22 +31,35 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
 
   const exportCSV = () => {
     if (!workouts.length) { toast.error('Немає тренувань для експорту'); return; }
-    const rows = [['Дата','Назва','Вправа','Підходи','Вага (кг)','Повтори','Об\'єм (кг)']];
-    workouts.forEach(w => {
-      const date = new Date(w.date).toLocaleDateString('uk-UA');
-      (w.exercises||[]).forEach((ex: any) => {
-        const sets = (ex.sets||[]).filter((s:any) => s.weight||s.reps);
-        const vol = sets.reduce((a:number,s:any)=>a+(s.weight||0)*(s.reps||0),0);
-        rows.push([date, w.name, ex.name||ex.nameKey||'', String(sets.length),
-          String(sets.reduce((a:number,s:any)=>Math.max(a,s.weight||0),0)),
-          String(sets.reduce((a:number,s:any)=>Math.max(a,s.reps||0),0)),
-          String(vol)]);
+    // One clean row per SET — easy to read and pivot in Excel
+    const sep = ';'; // Excel-friendly delimiter for locales using comma decimals
+    const header = ['Дата', 'Тренування', 'Вправа', 'Підхід', 'Вага (кг)', 'Повтори', "Об'єм (кг)"];
+    const rows: string[][] = [header];
+
+    const sorted = [...workouts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    sorted.forEach(w => {
+      const date = new Date(w.date).toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const wName = (w.source === 'generator' && w.programDayIndex)
+        ? `${t('common.day')} ${w.programDayIndex}: ${w.programTitle || ''}`.trim()
+        : (w.name || t('common.workout'));
+      (w.exercises || []).forEach((ex: any) => {
+        const exName = ex.name || ex.nameKey || '';
+        (ex.sets || []).forEach((s: any, si: number) => {
+          if (!s.weight && !s.reps) return;
+          const vol = (s.weight || 0) * (s.reps || 0);
+          rows.push([date, wName, exName, String(si + 1), String(s.weight || 0), String(s.reps || 0), String(vol)]);
+        });
       });
     });
-    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-    const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+
+    const escape = (c: string) => /[";\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c;
+    const csv = rows.map(r => r.map(escape).join(sep)).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'fitprogress_workouts.csv'; a.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fitprogress_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
     URL.revokeObjectURL(url);
     toast.success('CSV завантажено!');
   };
@@ -394,22 +407,24 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
         </div>
 
         {/* Quick Links */}
-        <div className="apple-card rounded-2xl overflow-hidden mb-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="rounded-3xl overflow-hidden mb-4" style={{ background: 'var(--bg-card)', boxShadow: '0 2px 16px rgba(40,32,56,0.06)' }}>
           {[
-            { icon: '⚖️', label: 'Вага тіла', sub: 'Відстежувати динаміку', screen: 'body-weight' },
-            { icon: '📅', label: 'Календар тренувань', sub: 'Всі тренування по місяцях', screen: 'calendar' },
-            { icon: '👥', label: 'Спільнота', sub: 'Ділитись прогресом', screen: 'social' },
-            { icon: '📊', label: 'Експорт даних', sub: 'Завантажити як CSV', screen: 'export' },
+            { Icon: Scale, color: 'var(--accent-exercise)', label: 'Вага тіла', sub: 'Відстежувати динаміку', screen: 'body-weight' },
+            { Icon: Calendar, color: 'var(--accent-energy)', label: 'Календар тренувань', sub: 'Всі тренування по місяцях', screen: 'calendar' },
+            { Icon: Users, color: 'var(--accent-stand)', label: 'Спільнота', sub: 'Ділитись прогресом', screen: 'social' },
+            { Icon: Download, color: 'var(--accent-move)', label: 'Експорт даних', sub: 'Завантажити як CSV', screen: 'export' },
           ].map((item, i) => (
             <button key={item.screen} onClick={() => item.screen === 'export' ? exportCSV() : onNavigate(item.screen)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-70 apple-text"
+              className="w-full flex items-center gap-3.5 px-4 py-3.5 active:opacity-70 apple-text"
               style={{ borderBottom: i < 3 ? '0.5px solid var(--separator)' : 'none' }}>
-              <span className="text-xl">{item.icon}</span>
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}1A` }}>
+                <item.Icon className="w-5 h-5" style={{ color: item.color }} />
+              </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-semibold">{item.label}</p>
                 <p className="text-xs apple-text-2 mt-0.5">{item.sub}</p>
               </div>
-              <svg className="w-4 h-4 apple-text-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <ChevronRight className="w-4 h-4 apple-text-3" />
             </button>
           ))}
         </div>

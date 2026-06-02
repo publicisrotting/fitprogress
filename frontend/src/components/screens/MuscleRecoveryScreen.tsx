@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Zap, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { ChevronLeft, Zap, CheckCircle, AlertTriangle, Clock, Dumbbell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
 
 interface Props { onNavigate: (s: string) => void; }
 
 const MUSCLE_GROUPS = [
-  { key: 'chest',     label: 'Груди',   emoji: '🫁', nameKeys: ['benchPress','inclineDumbbellPress','dumbbellFlyes'], recoveryHours: 48 },
-  { key: 'back',      label: 'Спина',   emoji: '🔙', nameKeys: ['pullups','barbellRows','latPulldown','dumbbellRows'], recoveryHours: 48 },
-  { key: 'legs',      label: 'Ноги',    emoji: '🦵', nameKeys: ['squats','romanianDeadlift','lunges','dumbbellLunges'], recoveryHours: 72 },
-  { key: 'shoulders', label: 'Плечі',   emoji: '💪', nameKeys: ['dumbbellPress','lateralRaises','uprightRows'], recoveryHours: 48 },
-  { key: 'arms',      label: 'Руки',    emoji: '💪', nameKeys: ['bicepCurls','hammerCurls','skullCrushers'], recoveryHours: 36 },
-  { key: 'abs',       label: 'Прес',    emoji: '🎯', nameKeys: ['plank','crunches','legRaises'], recoveryHours: 24 },
+  { key: 'chest',     label: 'Груди',   color: '#6D4AFF', nameKeys: ['benchPress','inclineDumbbellPress','dumbbellFlyes'], recoveryHours: 48 },
+  { key: 'back',      label: 'Спина',   color: '#2E8BFF', nameKeys: ['pullups','barbellRows','latPulldown','dumbbellRows'], recoveryHours: 48 },
+  { key: 'legs',      label: 'Ноги',    color: '#16C79A', nameKeys: ['squats','romanianDeadlift','lunges','dumbbellLunges'], recoveryHours: 72 },
+  { key: 'shoulders', label: 'Плечі',   color: '#FF8A3D', nameKeys: ['dumbbellPress','lateralRaises','uprightRows'], recoveryHours: 48 },
+  { key: 'arms',      label: 'Руки',    color: '#FF4D6D', nameKeys: ['bicepCurls','hammerCurls','skullCrushers'], recoveryHours: 36 },
+  { key: 'abs',       label: 'Прес',    color: '#A24BFF', nameKeys: ['plank','crunches','legRaises'], recoveryHours: 24 },
 ];
 
 export default function MuscleRecoveryScreen({ onNavigate }: Props) {
@@ -95,7 +95,9 @@ export default function MuscleRecoveryScreen({ onNavigate }: Props) {
             return (
               <div key={mg.key} className="px-4 py-4" style={{ borderBottom: i < muscleStatus.length-1 ? '0.5px solid var(--separator)' : 'none' }}>
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl">{mg.emoji}</span>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${mg.color}1A` }}>
+                    <Dumbbell className="w-5 h-5" style={{ color: mg.color }} />
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-semibold apple-text">{mg.label}</p>

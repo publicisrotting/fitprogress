@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen, TrendingUp, Scale } from 'lucide-react';
+import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen, TrendingUp, Scale, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { useSettings } from '../../context/SettingsContext';
@@ -214,13 +214,16 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
               <Flame className="w-4 h-4" style={{ color: 'var(--accent-energy)' }} />
               <span className="text-sm font-semibold apple-text">{t('dashboard.workoutStreak')}</span>
             </div>
-            <span className="text-sm font-bold" style={{ color: 'var(--accent-energy)' }}>{streak} 🔥</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm font-bold" style={{ color: 'var(--accent-energy)' }}>{streak}</span>
+              <Flame className="w-4 h-4" style={{ color: 'var(--accent-energy)', fill: 'var(--accent-energy)' }} />
+            </div>
           </div>
           <div className="flex justify-between">
             {weekStreak.map((day, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5">
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                  className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
                   style={{
                     background: day.completed ? 'var(--accent-move)' : 'var(--bg-card2)',
                     color: day.completed ? '#fff' : 'var(--text-tertiary)',
@@ -228,7 +231,7 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
                     outlineOffset: '2px',
                   }}
                 >
-                  {day.completed ? '✓' : ''}
+                  {day.completed && <Check className="w-4 h-4" strokeWidth={3} />}
                 </div>
                 <span className="text-[10px] font-medium apple-text-3">{day.day}</span>
               </div>

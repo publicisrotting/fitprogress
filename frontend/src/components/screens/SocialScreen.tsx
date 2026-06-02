@@ -6,10 +6,10 @@ import { API_URL } from '../../config';
 interface Props { onNavigate: (s: string) => void; }
 
 const COMMUNITY_POSTS = [
-  { id: '1', user: 'Олексій К.', avatar: '💪', time: '2 год тому', workout: 'Push Day — Груди + Трицепс', exercises: 5, volume: 8450, duration: 62, pr: 'Жим лежачи 120кг 🏆', likes: 12, comments: 3 },
-  { id: '2', user: 'Марія В.', avatar: '🔥', time: '4 год тому', workout: 'Legs Day', exercises: 6, volume: 12300, duration: 75, pr: null, likes: 8, comments: 1 },
-  { id: '3', user: 'Дмитро П.', avatar: '⚡', time: '6 год тому', workout: '5×5 Сила — Тренування A', exercises: 3, volume: 15600, duration: 55, pr: 'Присідання 140кг 🏆', likes: 24, comments: 7 },
-  { id: '4', user: 'Вікторія С.', avatar: '🌟', time: 'вчора', workout: 'Full Body', exercises: 8, volume: 6200, duration: 48, pr: null, likes: 5, comments: 2 },
+  { id: '1', user: 'Олексій К.', color: '#6D4AFF', time: '2 год тому', workout: 'Push Day — Груди + Трицепс', exercises: 5, volume: 8450, duration: 62, pr: 'Жим лежачи 120 кг', likes: 12, comments: 3 },
+  { id: '2', user: 'Марія В.', color: '#FF4D6D', time: '4 год тому', workout: 'Legs Day', exercises: 6, volume: 12300, duration: 75, pr: null, likes: 8, comments: 1 },
+  { id: '3', user: 'Дмитро П.', color: '#2E8BFF', time: '6 год тому', workout: '5×5 Сила — Тренування A', exercises: 3, volume: 15600, duration: 55, pr: 'Присідання 140 кг', likes: 24, comments: 7 },
+  { id: '4', user: 'Вікторія С.', color: '#16C79A', time: 'вчора', workout: 'Full Body', exercises: 8, volume: 6200, duration: 48, pr: null, likes: 5, comments: 2 },
 ];
 
 export default function SocialScreen({ onNavigate }: Props) {
@@ -74,7 +74,7 @@ export default function SocialScreen({ onNavigate }: Props) {
           {COMMUNITY_POSTS.map(post => (
             <div key={post.id} className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: '0.5px solid var(--separator)' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'var(--bg-card2)' }}>{post.avatar}</div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white" style={{ background: post.color }}>{post.user.charAt(0)}</div>
                 <div className="flex-1"><p className="text-sm font-semibold apple-text">{post.user}</p><p className="text-xs apple-text-3">{post.time}</p></div>
                 <button onClick={() => shareWorkout(post)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--bg-card2)' }}>
                   <Share2 className="w-4 h-4 apple-text-3" />

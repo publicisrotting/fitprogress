@@ -109,33 +109,35 @@
   --color-neutral-50: oklch(.985 0 0);
 }
 
-/* ── Apple Design System ────────────────────────────── */
+/* ── FitProgress Brand Design System (distinct, energetic) ── */
 :root {
-  /* Backgrounds */
-  --bg-primary:   #F2F2F7;   /* iOS system grouped bg */
+  /* Backgrounds — warm off-white, slightly tinted */
+  --bg-primary:   #F4F3F8;
   --bg-card:      #FFFFFF;
-  --bg-card2:     #EFEFF4;
+  --bg-card2:     #ECEAF3;
   /* Text */
-  --text-primary:   #000000;
-  --text-secondary: rgba(60,60,67,0.6);
-  --text-tertiary:  rgba(60,60,67,0.3);
+  --text-primary:   #16121F;
+  --text-secondary: rgba(40,32,56,0.62);
+  --text-tertiary:  rgba(40,32,56,0.34);
   /* Separator */
-  --separator:    rgba(60,60,67,0.18);
-  /* Fitness accent palette */
-  --accent-move:    #FF375F;   /* red-pink  — Move  */
-  --accent-exercise:#30D158;   /* green     — Exercise */
-  --accent-stand:   #0A84FF;   /* blue      — Stand */
-  --accent-energy:  #FF9F0A;   /* orange    — Energy */
+  --separator:    rgba(40,32,56,0.12);
+  /* Brand accent palette — violet-forward, energetic */
+  --accent-move:    #6D4AFF;   /* electric violet — primary brand */
+  --accent-exercise:#16C79A;   /* teal-green — success / done */
+  --accent-stand:   #2E8BFF;   /* azure — info */
+  --accent-energy:  #FF8A3D;   /* warm amber — streaks / energy */
+  --brand-grad-from:#6D4AFF;
+  --brand-grad-to:  #A24BFF;
 }
 
 .dark {
-  --bg-primary:   #000000;
-  --bg-card:      #1C1C1E;
-  --bg-card2:     #2C2C2E;
+  --bg-primary:   #0C0A14;   /* deep purple-black, not pure black */
+  --bg-card:      #181522;
+  --bg-card2:     #221E30;
   --text-primary:   #FFFFFF;
-  --text-secondary: rgba(235,235,245,0.6);
-  --text-tertiary:  rgba(235,235,245,0.3);
-  --separator:    rgba(84,84,88,0.6);
+  --text-secondary: rgba(230,226,240,0.62);
+  --text-tertiary:  rgba(230,226,240,0.36);
+  --separator:    rgba(120,110,150,0.22);
 }
 
 body, html, #root {

@@ -212,7 +212,7 @@ export const translations = {
     },
     library: {
       title: 'Exercise Library',
-      subtitle: 'exercises with video instructions',
+      subtitle: 'exercises with technique guides',
       searchPlaceholder: 'Search exercises...',
       allMuscles: 'All',
       chest: 'Chest',
@@ -770,7 +770,7 @@ export const translations = {
     },
     library: {
       title: 'Библиотека упражнений',
-      subtitle: 'упражнения с видео инструкциями',
+      subtitle: 'упражнений с техникой выполнения',
       searchPlaceholder: 'Поиск упражнений...',
       allMuscles: 'Все',
       chest: 'Грудь',
@@ -1277,7 +1277,7 @@ export const translations = {
     },
     library: {
       title: 'Бібліотека вправ',
-      subtitle: 'вправи з відео інструкціями',
+      subtitle: 'вправ з технікою виконання',
       searchPlaceholder: 'Пошук вправ...',
       allMuscles: 'Всі',
       chest: 'Груди',
