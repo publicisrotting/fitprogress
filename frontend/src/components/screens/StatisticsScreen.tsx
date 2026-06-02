@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Award, TrendingUp, Calendar, Dumbbell } from 'lucide-react';
+import { ChevronLeft, Award, TrendingUp, Calendar, Dumbbell, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
@@ -165,6 +165,19 @@ export default function StatisticsScreen({ onNavigate, showHeader = true }: { on
             </div>
           </div>
         )}
+
+        {/* Exercise Progress */}
+        <button onClick={() => onNavigate('exercise-progress')}
+          className="w-full apple-card rounded-2xl flex items-center gap-4 px-4 py-4 active:opacity-70" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-move)20' }}>
+            <TrendingUp className="w-5 h-5" style={{ color: 'var(--accent-move)' }} />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-semibold apple-text">Прогрес по вправі</p>
+            <p className="text-xs apple-text-3 mt-0.5">Графік + 1RM калькулятор</p>
+          </div>
+          <ChevronRight className="w-4 h-4 apple-text-3" />
+        </button>
 
         {/* Personal Records */}
         <div>

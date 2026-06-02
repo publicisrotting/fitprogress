@@ -12,6 +12,9 @@ import SettingsScreen from './components/screens/SettingsScreen';
 import WorkoutHistoryScreen from './components/screens/WorkoutHistoryScreen';
 import CoachScreen from './components/screens/CoachScreen';
 import OnboardingScreen from './components/screens/OnboardingScreen';
+import ExerciseProgressScreen from './components/screens/ExerciseProgressScreen';
+import BodyWeightScreen from './components/screens/BodyWeightScreen';
+import WorkoutTemplatesScreen from './components/screens/WorkoutTemplatesScreen';
 import BottomNavigation from './components/BottomNavigation';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -75,6 +78,12 @@ export default function App() {
         return <WorkoutHistoryScreen onNavigate={setCurrentScreen} />;
       case 'coach':
         return <CoachScreen onNavigate={setCurrentScreen} />;
+      case 'exercise-progress':
+        return <ExerciseProgressScreen onNavigate={setCurrentScreen} />;
+      case 'body-weight':
+        return <BodyWeightScreen onNavigate={setCurrentScreen} />;
+      case 'templates':
+        return <WorkoutTemplatesScreen onNavigate={setCurrentScreen} />;
       default:
         return <DashboardScreen onNavigate={setCurrentScreen} />;
     }

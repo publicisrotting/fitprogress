@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen } from 'lucide-react';
+import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen, TrendingUp } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { useSettings } from '../../context/SettingsContext';
@@ -299,20 +299,20 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         </div>
       )}
 
-      {/* Weight */}
-      {weight > 0 && (
-        <div className="px-5 mb-4">
-          <div className="apple-card rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)' + '18' }}>
-              <span className="text-base">⚖️</span>
-            </div>
-            <div>
-              <p className="text-xs apple-text-3">{t('dashboard.weight')}</p>
-              <p className="text-sm font-semibold apple-text">{weight} {weightUnit}</p>
-            </div>
+      {/* Weight tracker */}
+      <div className="px-5 mb-4">
+        <button onClick={() => onNavigate('body-weight')}
+          className="w-full apple-card rounded-2xl px-4 py-3.5 flex items-center gap-3 active:opacity-70" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)18' }}>
+            <span className="text-base">⚖️</span>
           </div>
-        </div>
-      )}
+          <div className="flex-1 text-left">
+            <p className="text-xs apple-text-3">{t('dashboard.weight')}</p>
+            <p className="text-sm font-semibold apple-text">{weight > 0 ? `${weight} ${weightUnit}` : 'Натисни щоб відстежувати'}</p>
+          </div>
+          <ChevronRight className="w-4 h-4 apple-text-3" />
+        </button>
+      </div>
     </div>
   );
 }

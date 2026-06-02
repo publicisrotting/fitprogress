@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Dumbbell, Zap, Target, User, Users, Lock, Crown, Plus, Check } from 'lucide-react';
+import { ChevronLeft, Dumbbell, Zap, Target, User, Users, Lock, Crown, Plus, Check, BookOpen, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
@@ -152,6 +152,19 @@ export default function GeneratorScreen({ onNavigate }: { onNavigate: (s: string
       </div>
 
       <div className="px-5 space-y-6">
+        {/* Templates shortcut */}
+        <button onClick={() => onNavigate('templates')}
+          className="w-full apple-card rounded-2xl flex items-center gap-4 px-4 py-4 active:opacity-70" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)20' }}>
+            <BookOpen className="w-5 h-5" style={{ color: 'var(--accent-exercise)' }} />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-semibold apple-text">Готові програми</p>
+            <p className="text-xs apple-text-3 mt-0.5">PPL, Upper/Lower, 5×5 та інші</p>
+          </div>
+          <ChevronRight className="w-4 h-4 apple-text-3" />
+        </button>
+
         {/* Goal */}
         <div>
           <h3 className="text-sm font-semibold apple-text-2 mb-3 uppercase tracking-wider">{t('generator.selectGoal')}</h3>

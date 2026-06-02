@@ -615,7 +615,7 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
 
   // ─── START MODAL ──────────────────────────────────────────────────────────
   const StartModal = () => (
-    <div className="fixed inset-0 z-[200] flex items-end">
+    <div className="fixed inset-0 z-[2000] flex items-end">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowStartModal(false)} />
       <div className="relative w-full apple-card rounded-t-3xl animate-slide-up" style={{ borderTop: '0.5px solid var(--separator)', maxHeight: '85vh' }}>
         <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-5" style={{ background: 'var(--separator)' }} />
@@ -880,9 +880,18 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
                       setExercises(n);
                       scheduleHint(e.target.value, exIdx, n[exIdx].nameKey);
                     }}
+                    list={`ex-suggestions-${exIdx}`}
                     className="flex-1 bg-transparent text-base font-semibold apple-text outline-none"
                     placeholder="Назва вправи"
                   />
+                  <datalist id={`ex-suggestions-${exIdx}`}>
+                    {(['benchPress','squats','deadlift','pullups','barbellRows','latPulldown','dumbbellPress',
+                      'lateralRaises','bicepCurls','hammerCurls','skullCrushers','lunges','romanianDeadlift',
+                      'inclineDumbbellPress','dumbbellFlyes','crunches','plank','legRaises','burpees',
+                      'dumbbellRows','dumbbellLunges','uprightRows'] as const).map(key => (
+                      <option key={key} value={translateExerciseName(key, key)} />
+                    ))}
+                  </datalist>
                   <button onClick={() => toggleFavorite(ex.name, ex.nameKey)}
                     className="w-8 h-8 rounded-xl flex items-center justify-center"
                     style={{ background: isFavorite(ex.name, ex.nameKey) ? 'var(--accent-energy)20' : 'var(--bg-card2)' }}>
