@@ -359,7 +359,7 @@ router.get('/coach', auth, async (req, res) => {
       ? Math.floor((now - new Date(workouts[0].date)) / (1000 * 60 * 60 * 24))
       : 99;
 
-    // Build per-exercise progression map
+    // Build per-exercise progression map (only real logged sets with weight > 0)
     const exerciseHistory = {};
     workouts.forEach(w => {
       (w.exercises || []).forEach(ex => {
@@ -377,20 +377,19 @@ router.get('/coach', auth, async (req, res) => {
     });
 
     const suggestions = [];
+    const hasRealData = Object.keys(exerciseHistory).length > 0;
 
-    // Progressive overload suggestions
+    // Progressive overload suggestions (need 2+ real sessions)
     Object.entries(exerciseHistory).forEach(([key, history]) => {
       if (history.length < 2) return;
       const [latest, previous] = history;
       const latestVol = latest.weight * latest.reps;
       const prevVol = previous.weight * previous.reps;
       if (latestVol <= prevVol * 1.05) {
-        // No meaningful progress in last session — suggest increase
-        const suggestedWeight = Math.ceil((latest.weight * 1.025) / 2.5) * 2.5; // round to 2.5kg
+        const suggestedWeight = Math.ceil((latest.weight * 1.025) / 2.5) * 2.5;
         suggestions.push({
           type: 'progressive_overload',
           exercise: key,
-          message: `Try ${suggestedWeight}kg for ${latest.reps} reps on ${key}`,
           current: { weight: latest.weight, reps: latest.reps },
           suggested: { weight: suggestedWeight, reps: latest.reps }
         });
@@ -434,13 +433,21 @@ router.get('/coach', auth, async (req, res) => {
       .slice(-8)
       .map(([week, volume]) => ({ week, volume }));
 
+    // Count planned workouts (weight=0) separately
+    const plannedWorkouts = workouts.filter(w =>
+      (w.exercises || []).every(ex => (ex.sets || []).every(s => (s.weight || 0) === 0))
+    ).length;
+
     res.json({
       suggestions: suggestions.slice(0, 5),
       recovery: recoveryMessage,
       deloadRecommended,
       daysSinceLastWorkout,
       weeklyVolume: weeklyVolumeArray,
-      totalExercisesTracked: Object.keys(exerciseHistory).length
+      totalExercisesTracked: Object.keys(exerciseHistory).length,
+      hasRealData,
+      plannedWorkouts,
+      totalWorkouts: workouts.length
     });
   } catch (err) {
     console.error(err.message);

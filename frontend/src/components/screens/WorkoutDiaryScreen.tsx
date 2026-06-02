@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Check, Trash2, Timer, Save, X, Dumbbell, Clock, TrendingUp, ChevronRight, Star, Pencil, Eye, Search } from 'lucide-react';
+import { Plus, Check, Trash2, Timer, Save, X, Dumbbell, Clock, TrendingUp, ChevronRight, Star, Pencil, Eye, Search, Zap, Target, BarChart2, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
@@ -43,6 +43,7 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
   const [workoutElapsed, setWorkoutElapsed] = useState(0); // seconds
   const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
   const workoutTimerRef = useRef<any>(null);
+  const [showStartModal, setShowStartModal] = useState(false);
   const [hints, setHints] = useState<Record<number, { last: { weight: number; reps: number; date: string } | null; best: { weight: number; reps: number; date: string } | null }>>({});
   const hintTimers = useRef<Record<number, any>>({});
   const exerciseNameToKey = useRef<Record<string, string> | null>(null);
@@ -238,8 +239,10 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
     const displayName = w.source === 'generator' && w.programDayIndex ? `${t('common.day') || 'Day'} ${w.programDayIndex}: ${goalLabel || w.programTitle || (t('common.workout') || 'Workout')}` : (w.name || (t('common.workout') || 'Workout'));
     setWorkoutName(displayName);
     setWorkoutDate(w.date || new Date().toISOString());
-    setView('view');
+    setView('active');
     setEditingWorkoutId(w._id);
+    setWorkoutStartTime(Date.now());
+    setWorkoutElapsed(0);
     setHints({});
     setExpandedWorkoutId(null);
   };
@@ -609,8 +612,94 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
     setExpandedWorkoutId(null);
   };
 
+  // START WORKOUT MODAL
+  const StartModal = () => (
+    <div className="fixed inset-0 z-[200] flex items-end justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowStartModal(false)} />
+      <div className="relative w-full max-w-lg bg-slate-900 rounded-t-[3rem] p-8 pb-[calc(2rem+env(safe-area-inset-bottom))] animate-slide-up border-t border-white/10">
+        {/* Handle */}
+        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
+
+        <h2 className="text-white text-2xl font-black tracking-tight mb-2">Нове тренування</h2>
+        <p className="text-white/40 text-sm mb-8">Обери спосіб старту</p>
+
+        <div className="space-y-3">
+          {/* Quick start */}
+          <button
+            onClick={() => { setShowStartModal(false); startWorkout(); }}
+            className="w-full flex items-center gap-5 p-5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-[2rem] active:scale-[0.98] transition-all shadow-xl shadow-orange-500/20"
+          >
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <Play className="w-7 h-7 text-white fill-white" />
+            </div>
+            <div className="text-left">
+              <p className="text-white font-black text-lg">Швидкий старт</p>
+              <p className="text-white/70 text-sm">Почни порожнє тренування</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/60 ml-auto" />
+          </button>
+
+          {/* From program */}
+          {workouts.filter(w => w.source === 'generator').length > 0 && (
+            <button
+              onClick={() => {
+                setShowStartModal(false);
+                const nextPlan = workouts.filter(w => w.source === 'generator')
+                  .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+                if (nextPlan) openWorkout(nextPlan);
+              }}
+              className="w-full flex items-center gap-5 p-5 bg-white/5 border border-white/10 rounded-[2rem] active:scale-[0.98] transition-all hover:bg-white/10"
+            >
+              <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-indigo-500/20">
+                <Zap className="w-7 h-7 text-indigo-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-black text-lg">З програми</p>
+                <p className="text-white/40 text-sm">Продовжити заплановане</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white/30 ml-auto" />
+            </button>
+          )}
+
+          {/* From favorites */}
+          {favorites.length > 0 && (
+            <button
+              onClick={() => { setShowStartModal(false); startWorkoutFromFavorites(); }}
+              className="w-full flex items-center gap-5 p-5 bg-white/5 border border-white/10 rounded-[2rem] active:scale-[0.98] transition-all hover:bg-white/10"
+            >
+              <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-yellow-500/20">
+                <Star className="w-7 h-7 text-yellow-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-white font-black text-lg">З улюблених</p>
+                <p className="text-white/40 text-sm">{favorites.length} вправ збережено</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white/30 ml-auto" />
+            </button>
+          )}
+
+          {/* Go to generator */}
+          <button
+            onClick={() => { setShowStartModal(false); onNavigate('generator'); }}
+            className="w-full flex items-center gap-5 p-5 bg-white/5 border border-white/10 rounded-[2rem] active:scale-[0.98] transition-all hover:bg-white/10"
+          >
+            <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-purple-500/20">
+              <Target className="w-7 h-7 text-purple-400" />
+            </div>
+            <div className="text-left">
+              <p className="text-white font-black text-lg">Згенерувати програму</p>
+              <p className="text-white/40 text-sm">AI підбере вправи під твою ціль</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/30 ml-auto" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="h-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white pb-24 relative overflow-x-hidden">
+      {showStartModal && <StartModal />}
       {/* Premium Background Blurs */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
       <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
@@ -623,8 +712,8 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
                 <h1 className="text-4xl font-black tracking-tighter leading-none mb-2">{t('diary.title') || 'Дневник'}</h1>
                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">{view === 'today' ? (t('diary.todayTitle') || 'Сегодняшняя тренировка') : view === 'favorites' ? (t('diary.favoritesTitle') || 'Избранные упражнения') : (t('diary.subtitle') || 'История тренировок')}</p>
               </div>
-              <button 
-                onClick={startWorkout}
+              <button
+                onClick={() => setShowStartModal(true)}
                 className="group relative active:scale-95 transition-all"
               >
                 <div className="absolute -inset-2 bg-orange-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition" />

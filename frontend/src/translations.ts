@@ -438,6 +438,7 @@ export const translations = {
         fat_loss: 'Weight Loss',
         upper: 'Upper Body',
         lower: 'Lower Body',
+        fitness: 'General Fitness',
       },
       intensities: {
         low: 'Low',
@@ -970,6 +971,7 @@ export const translations = {
         fat_loss: 'Похудение',
         upper: 'Верх тела',
         lower: 'Низ тела',
+        fitness: 'Общая физподготовка',
       },
       intensities: {
         low: 'Легкая',
@@ -1498,6 +1500,7 @@ export const translations = {
         fat_loss: 'Схуднення',
         upper: 'Верх тіла',
         lower: 'Низ тіла',
+        fitness: 'Загальна фізпідготовка',
       },
       intensities: {
         low: 'Легка',

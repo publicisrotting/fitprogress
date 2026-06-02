@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Use class-based dark mode (.dark on <html>) instead of OS media query */
+@custom-variant dark (&:is(.dark *));
+
 @layer utilities {
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
