@@ -18,7 +18,6 @@ import WorkoutTemplatesScreen from './components/screens/WorkoutTemplatesScreen'
 import AITrainerScreen from './components/screens/AITrainerScreen';
 import CalendarScreen from './components/screens/CalendarScreen';
 import MuscleRecoveryScreen from './components/screens/MuscleRecoveryScreen';
-import SocialScreen from './components/screens/SocialScreen';
 import BottomNavigation from './components/BottomNavigation';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';

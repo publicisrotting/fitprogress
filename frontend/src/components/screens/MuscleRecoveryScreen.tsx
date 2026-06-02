@@ -27,26 +27,27 @@ export default function MuscleRecoveryScreen({ onNavigate }: Props) {
 
   // Find last training time for each muscle group
   const now = Date.now();
-  const muscleStatus = MUSCLE_GROUPS.map(mg => {
-    let lastTrained: Date | null = null;
-    workouts
-      .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .forEach(w => {
-        if (lastTrained) return;
-        const hasExercise = (w.exercises||[]).some((ex:any) => mg.nameKeys.includes(ex.nameKey||''));
-        if (hasExercise) lastTrained = new Date(w.date);
-      });
-    const hoursSince = lastTrained ? (now - lastTrained.getTime()) / 3600000 : 999;
-    const pct = Math.min(100, (hoursSince / mg.recoveryHours) * 100);
-    const status = pct >= 100 ? 'ready' : pct >= 60 ? 'recovering' : 'fatigued';
-    return { ...mg, lastTrained, hoursSince, pct, status };
-  });
-
-  const STATUS_CONFIG = {
+  type StatusKey = 'ready' | 'recovering' | 'fatigued';
+  const STATUS_CONFIG: Record<StatusKey, { color: string; label: string; icon: any }> = {
     ready:      { color: 'var(--accent-exercise)', label: 'Готовий',      icon: CheckCircle },
     recovering: { color: 'var(--accent-energy)',   label: 'Відновлюється', icon: Clock },
     fatigued:   { color: 'var(--accent-move)',     label: 'Втомлений',    icon: AlertTriangle },
   };
+
+  const muscleStatus = MUSCLE_GROUPS.map(mg => {
+    let lastTrainedMs: number | null = null;
+    [...workouts]
+      .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .forEach(w => {
+        if (lastTrainedMs !== null) return;
+        const hasExercise = (w.exercises||[]).some((ex:any) => mg.nameKeys.includes(ex.nameKey||''));
+        if (hasExercise) lastTrainedMs = new Date(w.date).getTime();
+      });
+    const hoursSince = lastTrainedMs !== null ? (now - lastTrainedMs) / 3600000 : 999;
+    const pct = Math.min(100, (hoursSince / mg.recoveryHours) * 100);
+    const status: StatusKey = pct >= 100 ? 'ready' : pct >= 60 ? 'recovering' : 'fatigued';
+    return { ...mg, hoursSince, pct, status };
+  });
 
   const formatHours = (h: number) => {
     if (h > 999) return 'Давно';
