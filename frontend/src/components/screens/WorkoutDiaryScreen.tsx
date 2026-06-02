@@ -612,623 +612,353 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
     setExpandedWorkoutId(null);
   };
 
-  // START WORKOUT MODAL
+
+  // ─── START MODAL ──────────────────────────────────────────────────────────
   const StartModal = () => (
-    <div className="fixed inset-0 z-[200] flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowStartModal(false)} />
-      <div className="relative w-full max-w-lg bg-slate-900 rounded-t-[3rem] p-8 pb-[calc(2rem+env(safe-area-inset-bottom))] animate-slide-up border-t border-white/10">
-        {/* Handle */}
-        <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
-
-        <h2 className="text-white text-2xl font-black tracking-tight mb-2">Нове тренування</h2>
-        <p className="text-white/40 text-sm mb-8">Обери спосіб старту</p>
-
-        <div className="space-y-3">
-          {/* Quick start */}
-          <button
-            onClick={() => { setShowStartModal(false); startWorkout(); }}
-            className="w-full flex items-center gap-5 p-5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-[2rem] active:scale-[0.98] transition-all shadow-xl shadow-orange-500/20"
-          >
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-              <Play className="w-7 h-7 text-white fill-white" />
-            </div>
-            <div className="text-left">
-              <p className="text-white font-black text-lg">Швидкий старт</p>
-              <p className="text-white/70 text-sm">Почни порожнє тренування</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-white/60 ml-auto" />
-          </button>
-
-          {/* From program */}
-          {workouts.filter(w => w.source === 'generator').length > 0 && (
-            <button
-              onClick={() => {
-                setShowStartModal(false);
-                const nextPlan = workouts.filter(w => w.source === 'generator')
-                  .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-                if (nextPlan) openWorkout(nextPlan);
-              }}
-              className="w-full flex items-center gap-5 p-5 bg-white/5 border border-white/10 rounded-[2rem] active:scale-[0.98] transition-all hover:bg-white/10"
-            >
-              <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-indigo-500/20">
-                <Zap className="w-7 h-7 text-indigo-400" />
+    <div className="fixed inset-0 z-[200] flex items-end">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowStartModal(false)} />
+      <div className="relative w-full apple-card rounded-t-3xl pb-[calc(env(safe-area-inset-bottom)+16px)] animate-slide-up" style={{ borderTop: '0.5px solid var(--separator)' }}>
+        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-6" style={{ background: 'var(--separator)' }} />
+        <div className="px-5 pb-2">
+          <h2 className="text-xl font-bold apple-text mb-1">Нове тренування</h2>
+          <p className="text-sm apple-text-2 mb-5">Обери спосіб старту</p>
+          <div className="space-y-2.5">
+            <button onClick={() => { setShowStartModal(false); startWorkout(); }}
+              className="w-full flex items-center gap-4 p-4 rounded-2xl text-white active:scale-[0.98] transition-transform"
+              style={{ background: 'linear-gradient(135deg, var(--accent-move) 0%, #FF6B9D 100%)', boxShadow: '0 4px 16px rgba(255,55,95,0.3)' }}>
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Play className="w-6 h-6 text-white fill-white" />
               </div>
               <div className="text-left">
-                <p className="text-white font-black text-lg">З програми</p>
-                <p className="text-white/40 text-sm">Продовжити заплановане</p>
+                <p className="font-semibold">Швидкий старт</p>
+                <p className="text-sm opacity-70">Почни порожнє тренування</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-white/30 ml-auto" />
+              <ChevronRight className="w-5 h-5 opacity-60 ml-auto" />
             </button>
-          )}
 
-          {/* From favorites */}
-          {favorites.length > 0 && (
-            <button
-              onClick={() => { setShowStartModal(false); startWorkoutFromFavorites(); }}
-              className="w-full flex items-center gap-5 p-5 bg-white/5 border border-white/10 rounded-[2rem] active:scale-[0.98] transition-all hover:bg-white/10"
-            >
-              <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-yellow-500/20">
-                <Star className="w-7 h-7 text-yellow-400" />
+            {workouts.filter(w => w.source === 'generator').length > 0 && (
+              <button onClick={() => { setShowStartModal(false); const n = workouts.filter(w => w.source === 'generator').sort((a,b) => new Date(a.date).getTime()-new Date(b.date).getTime())[0]; if(n) openWorkout(n); }}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl apple-card2 active:scale-[0.98] transition-transform" style={{ border: '0.5px solid var(--separator)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-stand)20' }}>
+                  <Zap className="w-6 h-6" style={{ color: 'var(--accent-stand)' }} />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold apple-text">З програми</p>
+                  <p className="text-sm apple-text-2">Продовжити заплановане</p>
+                </div>
+                <ChevronRight className="w-5 h-5 apple-text-3 ml-auto" />
+              </button>
+            )}
+
+            {favorites.length > 0 && (
+              <button onClick={() => { setShowStartModal(false); startWorkoutFromFavorites(); }}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl apple-card2 active:scale-[0.98] transition-transform" style={{ border: '0.5px solid var(--separator)' }}>
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-energy)20' }}>
+                  <Star className="w-6 h-6" style={{ color: 'var(--accent-energy)' }} />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold apple-text">З улюблених</p>
+                  <p className="text-sm apple-text-2">{favorites.length} вправ</p>
+                </div>
+                <ChevronRight className="w-5 h-5 apple-text-3 ml-auto" />
+              </button>
+            )}
+
+            <button onClick={() => { setShowStartModal(false); onNavigate('generator'); }}
+              className="w-full flex items-center gap-4 p-4 rounded-2xl apple-card2 active:scale-[0.98] transition-transform" style={{ border: '0.5px solid var(--separator)' }}>
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#BF5AF220' }}>
+                <Target className="w-6 h-6" style={{ color: '#BF5AF2' }} />
               </div>
               <div className="text-left">
-                <p className="text-white font-black text-lg">З улюблених</p>
-                <p className="text-white/40 text-sm">{favorites.length} вправ збережено</p>
+                <p className="font-semibold apple-text">Згенерувати програму</p>
+                <p className="text-sm apple-text-2">AI підбере вправи</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-white/30 ml-auto" />
+              <ChevronRight className="w-5 h-5 apple-text-3 ml-auto" />
             </button>
-          )}
-
-          {/* Go to generator */}
-          <button
-            onClick={() => { setShowStartModal(false); onNavigate('generator'); }}
-            className="w-full flex items-center gap-5 p-5 bg-white/5 border border-white/10 rounded-[2rem] active:scale-[0.98] transition-all hover:bg-white/10"
-          >
-            <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center flex-shrink-0 border border-purple-500/20">
-              <Target className="w-7 h-7 text-purple-400" />
-            </div>
-            <div className="text-left">
-              <p className="text-white font-black text-lg">Згенерувати програму</p>
-              <p className="text-white/40 text-sm">AI підбере вправи під твою ціль</p>
-            </div>
-            <ChevronRight className="w-5 h-5 text-white/30 ml-auto" />
-          </button>
+          </div>
         </div>
       </div>
     </div>
   );
 
-  return (
-    <div className="h-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white pb-24 relative overflow-x-hidden">
-      {showStartModal && <StartModal />}
-      {/* Premium Background Blurs */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-blue-600/10 to-transparent pointer-events-none" />
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square bg-orange-600/10 blur-[120px] rounded-full pointer-events-none" />
+  // ─── RENDER ───────────────────────────────────────────────────────────────
+  const isListView = view === 'list' || view === 'today' || view === 'favorites';
 
-      <div className="relative z-10 p-6 pt-12">
-        {view === 'list' || view === 'today' || view === 'favorites' ? (
-          <div className="space-y-8 animate-fade-in">
-            <div className="flex justify-between items-end">
+  return (
+    <div className="h-full apple-bg overflow-hidden flex flex-col">
+      {showStartModal && <StartModal />}
+
+      {isListView ? (
+        /* ── LIST VIEW ─────────────────────────────────────────────────── */
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="px-5 pt-[calc(3rem+env(safe-area-inset-top))] pb-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-4xl font-black tracking-tighter leading-none mb-2">{t('diary.title') || 'Дневник'}</h1>
-                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">{view === 'today' ? (t('diary.todayTitle') || 'Сегодняшняя тренировка') : view === 'favorites' ? (t('diary.favoritesTitle') || 'Избранные упражнения') : (t('diary.subtitle') || 'История тренировок')}</p>
+                <h1 className="text-3xl font-bold apple-text tracking-tight">
+                  {view === 'today' ? 'Сьогодні' : view === 'favorites' ? 'Обрані' : (t('diary.title') || 'Щоденник')}
+                </h1>
+                <p className="text-sm apple-text-2 mt-0.5">{workouts.length} тренувань</p>
               </div>
-              <button
-                onClick={() => setShowStartModal(true)}
-                className="group relative active:scale-95 transition-all"
-              >
-                <div className="absolute -inset-2 bg-orange-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition" />
-                <div className="relative bg-orange-500 p-4 rounded-2xl shadow-xl flex items-center justify-center">
-                  <Plus className="w-7 h-7 text-white" />
-                </div>
+              <button onClick={() => setShowStartModal(true)}
+                className="w-11 h-11 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform"
+                style={{ background: 'var(--accent-move)', boxShadow: '0 4px 12px rgba(255,55,95,0.35)' }}>
+                <Plus className="w-6 h-6" strokeWidth={2.5} />
               </button>
             </div>
 
-            <div className="flex gap-2 p-1.5 bg-slate-100/80 dark:bg-white/5 rounded-[2rem] border border-slate-200/70 dark:border-white/5 backdrop-blur-md">
-              {[
-                { id: 'list', label: t('diary.all') || 'Все' },
-                { id: 'today', label: t('diary.today') || 'Сегодня' },
-                { id: 'favorites', label: t('diary.favorites') || 'Избранные' }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => { setView(tab.id as any); setDayFilter(null); }}
-                  className={`flex-1 py-3 rounded-[1.6rem] text-[10px] font-black uppercase tracking-widest transition-all ${
-                    view === tab.id ? 'bg-white text-slate-950 shadow-xl' : 'text-slate-500 hover:text-slate-950 hover:bg-slate-200/60 dark:text-white/40 dark:hover:text-white dark:hover:bg-white/5'
-                  }`}
-                >
+            {/* Tabs */}
+            <div className="flex gap-1.5 p-1 apple-card rounded-xl mb-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              {[{id:'list',label:t('diary.all')||'Усі'},{id:'today',label:t('diary.today')||'Сьогодні'},{id:'favorites',label:t('diary.favorites')||'Обрані'}].map(tab => (
+                <button key={tab.id} onClick={() => { setView(tab.id as any); setDayFilter(null); }}
+                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                  style={{ background: view === tab.id ? 'var(--accent-move)' : 'transparent', color: view === tab.id ? '#fff' : 'var(--text-secondary)' }}>
                   {tab.label}
                 </button>
               ))}
             </div>
 
-            <div className="flex gap-2 overflow-x-auto no-scrollbar px-1">
-              <button
-                onClick={() => setDayFilter(null)}
-                className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${
-                  dayFilter === null ? 'bg-white text-slate-950' : 'bg-slate-100 text-slate-500 hover:bg-slate-200/60 dark:bg-white/5 dark:text-white/40 dark:hover:bg-white/10'
-                }`}
-              >
-                {t('diary.weekdayAll') || 'Все дни'}
-              </button>
-              {weekDays.map((label: string, idx: number) => (
-                <button
-                  key={`${label}-${idx}`}
-                  onClick={() => setDayFilter(idx)}
-                  className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${
-                    dayFilter === idx ? 'bg-white text-slate-950' : 'bg-slate-100 text-slate-500 hover:bg-slate-200/60 dark:bg-white/5 dark:text-white/40 dark:hover:bg-white/10'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2rem] p-5 backdrop-blur-md">
-                <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="w-4 h-4 text-orange-400" />
-                  <span className="text-[9px] font-black text-slate-500 dark:text-white/20 uppercase tracking-widest">{t('diary.totalVolume') || 'Тоннаж'}</span>
-                </div>
-                <p className="text-2xl font-black">
-                  {workouts.reduce((acc, w) => acc + (w.exercises?.reduce((eAcc:any, ex:any) => eAcc + ex.sets?.reduce((sAcc:any, s:any) => sAcc + (s.weight * s.reps), 0), 0) || 0), 0).toLocaleString()}
-                </p>
-              </div>
-              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[2rem] p-5 backdrop-blur-md">
-                <div className="flex items-center gap-2 mb-3">
-                  <Clock className="w-4 h-4 text-blue-400" />
-                  <span className="text-[9px] font-black text-slate-500 dark:text-white/20 uppercase tracking-widest">{t('diary.totalWorkouts') || 'Всего тренировок'}</span>
-                </div>
-                <p className="text-2xl font-black">
-                  {workouts.length}
-                  <span className="text-sm text-slate-500 dark:text-white/30 ml-1">{t('common.workouts') || 'шт'}</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
-                  {view === 'today' ? (t('diary.todayList') || 'Сегодня') : view === 'favorites' ? (t('diary.favoritesList') || 'Избранные упражнения') : (t('diary.recent') || 'Последние тренировки')}
-                </h3>
-                {view === 'favorites' && (
-                  <button
-                    onClick={startWorkoutFromFavorites}
-                    className="px-4 py-2 bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-white/20 transition-all"
-                  >
-                    {t('diary.startFromFavorites') || 'Начать из избранных'}
-                  </button>
-                )}
-              </div>
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 dark:text-white/30 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('diary.searchPlaceholder') || 'Поиск по названию или упражнениям'}
-                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold outline-none focus:border-orange-500"
-                />
-              </div>
-              {loading ? (
-                <div className="py-20 flex flex-col items-center gap-4 opacity-20">
-                  <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">{t('common.loading')}</p>
-                </div>
-              ) : filteredWorkouts.length === 0 ? (
-                <div className="py-16 text-center bg-white/5 rounded-[3rem] border border-dashed border-white/10 px-8">
-                  <Dumbbell className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                  <p className="text-white/60 text-sm font-black mb-3">{view === 'today' ? (t('diary.todayEmpty') || 'Сегодня тренировок нет') : view === 'favorites' ? (t('diary.favoritesEmpty') || 'Избранных упражнений пока нет') : (t('diary.noWorkouts') || 'Пока нет тренировок')}</p>
-                  <p className="text-slate-500 dark:text-white/30 text-xs font-bold uppercase tracking-widest mb-6">{t('diary.emptyHint') || 'Нажми + чтобы начать или сохрани программу из генератора'}</p>
-                  <button
-                    onClick={startWorkout}
-                    className="px-8 py-4 bg-white text-slate-950 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl active:scale-95 transition-all"
-                  >
-                    {t('diary.startWorkout') || 'Начать тренировку'}
-                  </button>
-                </div>
-              ) : (
-                filteredWorkouts.map((w, idx) => (
-                  <div 
-                    key={w._id} 
-                    onClick={() => openWorkout(w)}
-                    className="group bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 rounded-[2.5rem] active:scale-[0.98] transition-all relative overflow-hidden animate-fade-in-up cursor-pointer"
-                    style={{ animationDelay: `${idx * 0.05}s` }}
-                  >
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-3xl -mr-12 -mt-12 group-hover:bg-orange-500/10 transition-all" />
-                    <div className="flex justify-between items-start relative z-10">
-                      <div>
-                        <h3 className="text-lg font-black tracking-tight mb-1 group-hover:text-orange-400 transition-colors">
-                          {w.source === 'generator' && w.programDayIndex ? `${t('common.day')} ${w.programDayIndex}: ${w.programGoal ? t(`generator.goals.${w.programGoal}`) : (w.programTitle || t('common.workout'))}` : (w.name || t('common.workout'))}
-                        </h3>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">
-                            {new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(w.date))}
-                          </span>
-                          <div className="w-1 h-1 bg-white/10 rounded-full" />
-                          <span className="text-[10px] font-black text-blue-400/60 uppercase tracking-widest">
-                            {w.duration || 0} хв
-                          </span>
-                          {assignedDays[w._id] !== undefined && assignedDays[w._id] !== null && (
-                            <>
-                              <div className="w-1 h-1 bg-white/10 rounded-full" />
-                              <span className="text-[10px] font-black text-orange-400/80 uppercase tracking-widest bg-orange-500/10 px-2 py-1 rounded-full">
-                                {weekDays[assignedDays[w._id] as number]}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleInline(w); }}
-                          className="w-10 h-10 rounded-xl bg-white/5 text-white/50 hover:bg-white/10 transition-all flex items-center justify-center"
-                          title={t('diary.editInline') || 'Редактировать'}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openWorkout(w); }}
-                          className="w-10 h-10 rounded-xl bg-white text-slate-950 hover:bg-white/90 transition-all flex items-center justify-center"
-                          title={t('diary.open') || 'Открыть'}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteWorkout(w._id); }}
-                          className="w-10 h-10 rounded-xl bg-white/5 text-white/40 hover:bg-red-500/20 hover:text-red-400 transition-all flex items-center justify-center"
-                          title={t('common.delete') || 'Удалить'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 pt-4 border-t border-white/5 flex gap-4">
-                       <div className="flex items-center gap-1.5">
-                         <Dumbbell className="w-3 h-3 text-orange-500/40" />
-                         <span className="text-[10px] font-black text-white/60 uppercase">{w.exercises?.length || 0} {t('profile.exercises') || 'exercises'}</span>
-                       </div>
-                    </div>
-
-                    {expandedWorkoutId === w._id && inlineDrafts[w._id] && (
-                      <div className="mt-6 space-y-4 border-t border-white/5 pt-6">
-                        <input
-                          value={inlineDrafts[w._id].name}
-                          onChange={(e) => setInlineDrafts(prev => ({ ...prev, [w._id]: { ...prev[w._id], name: e.target.value } }))}
-                          className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-sm font-black outline-none focus:border-orange-500"
-                        />
-                        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-4">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                            {t('diary.assignDay') || 'День тренировки'}
-                          </span>
-                          <select
-                            value={assignedDays[w._id] ?? ''}
-                            onChange={(e) => setWorkoutDay(w._id, e.target.value === '' ? null : Number(e.target.value))}
-                            className="ml-auto bg-white/5 border border-white/10 text-white text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl outline-none"
-                          >
-                            <option value="" className="bg-slate-900">{t('diary.noDay') || 'Без дня'}</option>
-                            {weekDays.map((label: string, idx: number) => (
-                              <option key={`${label}-${idx}`} value={idx} className="bg-slate-900">
-                                {label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="space-y-4">
-                          {inlineDrafts[w._id].exercises.map((ex, exIdx) => (
-                            <div key={`${w._id}-${exIdx}`} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-                              <div className="flex items-center gap-3">
-                                <input
-                                  value={translateExerciseName(ex.nameKey || resolveExerciseKey(ex.name), ex.name)}
-                                  onChange={(e) => updateInlineExerciseName(w._id, exIdx, e.target.value)}
-                                  className="flex-1 bg-transparent border-b border-white/10 text-sm font-black outline-none pb-1"
-                                />
-                                <button
-                                  onClick={() => toggleFavorite(ex.name, (ex as any).nameKey)}
-                                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${isFavorite(ex.name, (ex as any).nameKey) ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/5 text-white/20'}`}
-                                >
-                                  <Star className={`w-4 h-4 ${isFavorite(ex.name, (ex as any).nameKey) ? 'stroke-[2.5]' : ''}`} />
-                                </button>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 px-2">
-                                  <div className="w-8" />
-                                  <div className="flex-1 text-[9px] font-black text-white/40 uppercase text-center tracking-widest">{t('statistics.metrics.weight') || 'Вес'} ({units === 'metric' ? t('common.kg') : t('common.lb')})</div>
-                                  <div className="flex-1 text-[9px] font-black text-white/40 uppercase text-center tracking-widest">{t('statistics.metrics.reps') || 'Повторы'}</div>
-                                  <div className="w-9" />
-                                </div>
-                                {ex.sets.map((s, sIdx) => (
-                                  <div key={`${w._id}-${exIdx}-${sIdx}`} className="flex items-center gap-2">
-                                    <div className="w-8 h-9 flex items-center justify-center text-[10px] font-black text-white/50">{s.set}</div>
-                                    <input
-                                      type="number"
-                                      inputMode="decimal"
-                                      enterKeyHint="next"
-                                      min={0}
-                                      step="0.5"
-                                      value={s.weight === 0 ? '' : s.weight}
-                                      onChange={(e) => updateInlineSet(w._id, exIdx, sIdx, 'weight', e.target.value)}
-                                      className="flex-1 bg-white/10 border border-white/20 p-3 h-12 rounded-xl text-center text-sm font-black text-white outline-none focus:border-orange-400 focus:bg-white/15 caret-white placeholder:text-white/30"
-                                      placeholder="0"
-                                    />
-                                    <input
-                                      type="number"
-                                      inputMode="numeric"
-                                      enterKeyHint="done"
-                                      min={0}
-                                      step="1"
-                                      value={s.reps === 0 ? '' : s.reps}
-                                      onChange={(e) => updateInlineSet(w._id, exIdx, sIdx, 'reps', e.target.value)}
-                                      className="flex-1 bg-white/10 border border-white/20 p-3 h-12 rounded-xl text-center text-sm font-black text-white outline-none focus:border-orange-400 focus:bg-white/15 caret-white placeholder:text-white/30"
-                                      placeholder="0"
-                                    />
-                                    <button
-                                      onClick={() => removeInlineSet(w._id, exIdx, sIdx)}
-                                      className="w-9 h-9 rounded-xl bg-white/5 text-white/20 hover:text-red-500"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                              <button
-                                onClick={() => addInlineSet(w._id, exIdx)}
-                                className="w-full py-2 bg-white/5 border border-dashed border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40"
-                              >
-                                {t('diary.addSet') || 'Добавить подход'}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => saveInlineWorkout(w._id)}
-                            className="flex-1 py-3 bg-white text-slate-950 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                          >
-                            {t('common.save') || 'Сохранить'}
-                          </button>
-                          <button
-                            onClick={() => setExpandedWorkoutId(null)}
-                            className="flex-1 py-3 bg-white/5 text-white/40 rounded-2xl text-[10px] font-black uppercase tracking-widest"
-                          >
-                            {t('common.cancel') || 'Отмена'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-4 h-4 apple-text-3 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Пошук тренувань та вправ"
+                className="w-full apple-card rounded-xl pl-10 pr-4 py-3 text-sm apple-text outline-none"
+                style={{ border: '0.5px solid var(--separator)' }} />
             </div>
           </div>
-        ) : (
-          /* WORKOUT VIEW / EDIT */
-          <div className="space-y-8 animate-scale-in pb-20">
-            {/* Active Header */}
-            <div className="flex items-center justify-between sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl py-4 -mx-6 px-6 border-b border-slate-200/70 dark:border-transparent">
-              <button 
-                onClick={() => { if(view === 'view' || window.confirm(t('diary.cancelWorkoutConfirm') || 'Отменить тренировку? Данные не будут сохранены.')) setView('list'); }} 
-                className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl active:scale-90 transition-all border border-slate-200 dark:border-white/5"
-              >
-                <X className="w-5 h-5 text-slate-500 dark:text-white/40" />
-              </button>
-              <div className="text-center">
-                <p className="text-[10px] font-black text-slate-500 dark:text-white/30 uppercase tracking-[0.3em]">{t('common.workout') || 'Тренировка'}</p>
-                {view === 'active' && workoutStartTime && (
-                  <p className="text-xs font-black text-orange-400 tabular-nums mt-0.5">{formatTime(workoutElapsed)}</p>
-                )}
-              </div>
 
-              {view === 'active' ? (
-                <button 
-                  onClick={handleSave} 
-                  className="p-3 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-90 transition-all"
-                >
-                  <Save className="w-6 h-6" />
+          {/* Quick stats */}
+          <div className="px-5 flex gap-3 mb-3 flex-shrink-0">
+            <div className="flex-1 apple-card rounded-2xl p-3.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <TrendingUp className="w-3.5 h-3.5" style={{ color: 'var(--accent-move)' }} />
+                <span className="text-xs apple-text-3">Об'єм</span>
+              </div>
+              <p className="text-xl font-bold apple-text">
+                {workouts.reduce((a,w) => a+(w.exercises?.reduce((b:number,ex:any)=>b+ex.sets?.reduce((c:number,s:any)=>c+(s.weight*s.reps),0),0)||0),0).toLocaleString()}
+              </p>
+            </div>
+            <div className="flex-1 apple-card rounded-2xl p-3.5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Clock className="w-3.5 h-3.5" style={{ color: 'var(--accent-stand)' }} />
+                <span className="text-xs apple-text-3">Всього</span>
+              </div>
+              <p className="text-xl font-bold apple-text">{workouts.length}</p>
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto px-5 pb-28">
+            {loading ? (
+              <div className="py-20 flex justify-center">
+                <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'var(--accent-move)', borderTopColor: 'transparent' }} />
+              </div>
+            ) : filteredWorkouts.length === 0 ? (
+              <div className="py-16 text-center">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--bg-card2)' }}>
+                  <Dumbbell className="w-8 h-8 apple-text-3" />
+                </div>
+                <p className="text-base font-semibold apple-text mb-1">{view==='today'?'Сьогодні немає тренувань':'Ще немає тренувань'}</p>
+                <p className="text-sm apple-text-2 mb-6">Натисни + щоб почати</p>
+                <button onClick={() => setShowStartModal(true)}
+                  className="px-6 py-3 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: 'var(--accent-move)' }}>
+                  Почати тренування
                 </button>
-              ) : (
-                <button 
-                  onClick={startEditCurrentWorkout} 
-                  className="p-3 bg-white text-slate-950 rounded-2xl shadow-lg active:scale-90 transition-all"
-                  title={t('profile.edit') || 'Редактировать'}
-                >
-                  <Pencil className="w-6 h-6" />
-                </button>
+              </div>
+            ) : (
+              <div className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                {filteredWorkouts.map((w, idx) => {
+                  const wName = w.source === 'generator' && w.programDayIndex
+                    ? `${t('common.day')} ${w.programDayIndex}: ${w.programGoal ? t(`generator.goals.${w.programGoal}`) : (w.programTitle || t('common.workout'))}`
+                    : (w.name || t('common.workout'));
+                  return (
+                    <div key={w._id} style={{ borderBottom: idx < filteredWorkouts.length - 1 ? '0.5px solid var(--separator)' : 'none' }}>
+                      <div onClick={() => openWorkout(w)} className="flex items-center gap-3 px-4 py-3.5 active:opacity-70 cursor-pointer">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: w.source==='generator' ? 'var(--accent-stand)20' : 'var(--accent-move)20' }}>
+                          <Dumbbell className="w-5 h-5" style={{ color: w.source==='generator' ? 'var(--accent-stand)' : 'var(--accent-move)' }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold apple-text truncate">{wName}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs apple-text-3">
+                              {new Intl.DateTimeFormat(locale, {day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(w.date))}
+                            </span>
+                            {(w.duration||0) > 0 && <>
+                              <span className="text-xs apple-text-3">·</span>
+                              <span className="text-xs apple-text-3">{w.duration}хв</span>
+                            </>}
+                            <span className="text-xs apple-text-3">· {w.exercises?.length||0} вправ</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button onClick={e => { e.stopPropagation(); deleteWorkout(w._id); }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+                            style={{ background: 'var(--bg-card2)' }}>
+                            <Trash2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-move)' }} />
+                          </button>
+                          <ChevronRight className="w-4 h-4 apple-text-3" />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+      ) : (
+        /* ── ACTIVE WORKOUT VIEW ───────────────────────────────────────── */
+        <div className="flex flex-col h-full">
+          {/* Sticky header */}
+          <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 apple-bg/95 backdrop-blur-xl"
+            style={{ borderBottom: '0.5px solid var(--separator)', paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}>
+            <button onClick={() => { if(window.confirm('Скасувати тренування?')) setView('list'); }}
+              className="w-9 h-9 apple-card rounded-full flex items-center justify-center active:scale-90 transition-transform">
+              <X className="w-5 h-5 apple-text-2" />
+            </button>
+            <div className="text-center">
+              <p className="text-sm font-semibold apple-text">Тренування</p>
+              {workoutStartTime && (
+                <p className="text-xs font-bold tabular-nums" style={{ color: 'var(--accent-move)' }}>{formatTime(workoutElapsed)}</p>
               )}
             </div>
+            <button onClick={handleSave}
+              className="px-5 py-2 rounded-xl text-white text-sm font-semibold active:scale-90 transition-transform"
+              style={{ background: 'var(--accent-exercise)', boxShadow: '0 2px 8px rgba(48,209,88,0.3)' }}>
+              Зберегти
+            </button>
+          </div>
 
-            {/* Rest Timer Overlay (If active) */}
-            {view === 'active' && isRestActive && (
-              <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-[2.5rem] flex items-center justify-between animate-fade-in backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center border border-blue-500/20">
-                    <Timer className="w-6 h-6 text-blue-400 animate-spin" />
+          <div className="flex-1 overflow-y-auto px-5 pb-10 space-y-4 pt-4">
+            {/* Workout name */}
+            <input value={workoutName} onChange={e => setWorkoutName(e.target.value)}
+              className="w-full apple-card rounded-2xl px-4 py-3.5 text-lg font-bold apple-text outline-none"
+              style={{ border: '0.5px solid var(--separator)' }} />
+
+            {/* Rest timer */}
+            {isRestActive && (
+              <div className="apple-card rounded-2xl p-4 flex items-center justify-between animate-fade-in"
+                style={{ border: '1px solid var(--accent-stand)30' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-stand)20' }}>
+                    <Timer className="w-5 h-5" style={{ color: 'var(--accent-stand)' }} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-blue-400/60 uppercase tracking-widest mb-1">{t('diary.rest')}</p>
-                    <p className="text-2xl font-black tabular-nums">{formatTime(restTimer)}</p>
+                    <p className="text-xs apple-text-3">Відпочинок</p>
+                    <p className="text-xl font-bold apple-text tabular-nums">{formatTime(restTimer)}</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => { setIsRestActive(false); setRestTimer(0); }}
-                  className="px-6 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all"
-                >
-                  {t('common.skip') || 'Пропустить'}
+                <button onClick={() => { setIsRestActive(false); setRestTimer(0); }}
+                  className="px-4 py-2 rounded-xl text-sm font-medium apple-card2" style={{ color: 'var(--accent-stand)' }}>
+                  Пропустити
                 </button>
               </div>
             )}
 
-            {/* Workout Info */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-1 h-1 bg-orange-500 rounded-full" />
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">{t('diary.workoutNameLabel') || 'Название тренировки'}</span>
+            {/* Exercises */}
+            {exercises.length === 0 && (
+              <div className="py-12 text-center apple-card rounded-2xl">
+                <Dumbbell className="w-10 h-10 apple-text-3 mx-auto mb-3" />
+                <p className="text-sm apple-text-2">Додай першу вправу</p>
               </div>
-              <input 
-                value={workoutName}
-                onChange={e => setWorkoutName(e.target.value)}
-                className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 rounded-[2rem] text-xl font-black outline-none focus:border-orange-500 transition-all backdrop-blur-md"
-                disabled={view === 'view'}
-              />
-            </div>
-
-            {/* Exercises List */}
-            <div className="space-y-6">
-              {exercises.length === 0 && (
-                <div className="py-16 text-center bg-white dark:bg-white/5 rounded-[3rem] border border-dashed border-slate-200 dark:border-white/10 px-8">
-                  <Dumbbell className="w-12 h-12 text-slate-300 dark:text-white/10 mx-auto mb-4" />
-                  <p className="text-slate-700 dark:text-white/60 text-sm font-black mb-3">{t('diary.addExercisePrompt') || 'Добавьте упражнение, чтобы начать'}</p>
-                  <p className="text-slate-500 dark:text-white/30 text-xs font-bold uppercase tracking-widest">{t('diary.emptyHint') || 'Нажми + чтобы добавить первое упражнение'}</p>
-                </div>
-              )}
-              {exercises.map((ex, exIdx) => (
-                <div key={exIdx} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] p-8 space-y-6 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-8 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-                    <Dumbbell className="w-32 h-32" />
-                  </div>
-                  
-                  <div className="flex justify-between items-center relative z-10">
-            <input 
-                      value={translateExerciseName(ex.nameKey || resolveExerciseKey(ex.name), ex.name)}
-                      onChange={e => {
-                        const n = [...exercises];
-                        n[exIdx].name = e.target.value;
-                n[exIdx].nameKey = resolveExerciseKey(e.target.value);
-                        setExercises(n);
-                scheduleHint(e.target.value, exIdx, n[exIdx].nameKey);
-                      }}
-                      className="bg-transparent border-b border-slate-200 dark:border-white/10 text-xl font-black outline-none pb-2 focus:border-orange-500 transition-colors flex-1 mr-4"
-                      disabled={view === 'view'}
-                    />
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => toggleFavorite(ex.name, ex.nameKey)}
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${isFavorite(ex.name, ex.nameKey) ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/5 text-white/20'}`}
-                        disabled={view === 'view'}
-                      >
-                        <Star className={`w-5 h-5 ${isFavorite(ex.name, ex.nameKey) ? 'stroke-[2.5]' : ''}`} />
-                      </button>
-                      {view === 'active' && (
-                        <button 
-                          onClick={() => handleRemoveExercise(exIdx)}
-                          className="p-2 text-white/10 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3 relative z-10">
-                    {hints[exIdx] && (hints[exIdx].last || hints[exIdx].best) && (
-                      <div className="flex items-center gap-3 px-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-white/30">
-                        {hints[exIdx].last && (
-                          <span>{t('diary.lastTime') || 'Прошлый раз'}: {hints[exIdx].last.weight} × {hints[exIdx].last.reps}</span>
-                        )}
-                        {hints[exIdx].best && (
-                          <span>{t('diary.bestRecord') || 'Рекорд'}: {hints[exIdx].best.weight} × {hints[exIdx].best.reps}</span>
-                        )}
-                      </div>
-                    )}
-                    {ex.sets.map((s, sIdx) => (
-                      <div key={sIdx} className="flex items-start gap-3 animate-fade-in-up" style={{ animationDelay: `${sIdx * 0.05}s` }}>
-                        <div className="w-8 h-12 flex items-center justify-center bg-slate-100 dark:bg-white/5 rounded-xl text-xs font-black text-slate-500 dark:text-white/20 border border-slate-200 dark:border-white/5">
-                          {s.set}
-                        </div>
-                        <div className="flex-1 grid grid-cols-2 gap-3">
-                          <label className="flex flex-col gap-2">
-                            <span className="text-[9px] font-black text-slate-500 dark:text-white/30 uppercase tracking-widest text-center">
-                              {t('statistics.metrics.weight') || 'Вес'} ({units === 'metric' ? t('common.kg') : t('common.lb')})
-                            </span>
-                            <input 
-                              type="number"
-                              inputMode="decimal"
-                              enterKeyHint="next"
-                              min={0}
-                              step="0.5"
-                              value={s.weight === 0 ? '' : s.weight}
-                              onChange={e => handleUpdateSet(exIdx, sIdx, 'weight', e.target.value)}
-                              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 h-12 rounded-xl text-center font-black outline-none focus:bg-slate-50 dark:focus:bg-white/10 focus:border-blue-500 transition-all text-lg text-slate-950 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30"
-                              placeholder="0"
-                              disabled={view === 'view'}
-                            />
-                          </label>
-                          <label className="flex flex-col gap-2">
-                            <span className="text-[9px] font-black text-slate-500 dark:text-white/30 uppercase tracking-widest text-center">
-                              {t('statistics.metrics.reps') || 'Повторы'}
-                            </span>
-                            <input 
-                              type="number"
-                              inputMode="numeric"
-                              enterKeyHint="done"
-                              min={0}
-                              step="1"
-                              value={s.reps === 0 ? '' : s.reps}
-                              onChange={e => handleUpdateSet(exIdx, sIdx, 'reps', e.target.value)}
-                              className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-3 h-12 rounded-xl text-center font-black outline-none focus:bg-slate-50 dark:focus:bg-white/10 focus:border-orange-500 transition-all text-lg text-slate-950 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30"
-                              placeholder="0"
-                              disabled={view === 'view'}
-                            />
-                          </label>
-                        </div>
-                        {view === 'active' && (
-                          <div className="flex flex-col items-center gap-2">
-                            <button 
-                              onClick={() => toggleSetDone(exIdx, sIdx)}
-                              className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all shadow-lg ${
-                                s.done 
-                                  ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
-                                  : 'bg-white/5 text-white/10 border border-white/5 hover:bg-white/10'
-                              }`}
-                            >
-                              <Check className={`w-6 h-6 ${s.done ? 'stroke-[3]' : ''}`} />
-                            </button>
-                            <button
-                              onClick={() => handleRemoveSet(exIdx, sIdx)}
-                              className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 text-white/20 border border-white/5 hover:text-red-500 hover:border-red-500/30 transition-all"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {view === 'active' && (
-                    <div className="flex gap-3 relative z-10">
-                      <button 
-                        onClick={() => handleAddSet(exIdx)}
-                        className="flex-1 py-4 bg-white/5 border border-dashed border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-white/40 hover:bg-white/10 transition-all"
-                      >
-                        {t('diary.addSet')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {view === 'active' && (
-              <button 
-                onClick={handleAddExercise}
-                className="group w-full py-6 bg-blue-500/10 border-2 border-dashed border-blue-500/20 rounded-[2.5rem] text-blue-400 font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-blue-500/20"
-              >
-                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                {t('diary.addExercise') || 'Добавить упражнение'}
-              </button>
             )}
 
-            {/* Total Volume Info */}
-            <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-white/10 p-8 rounded-[3rem] text-center shadow-2xl">
-              <p className="text-[10px] font-black text-slate-500 dark:text-white/20 uppercase tracking-[0.3em] mb-3">{t('diary.totalVolumeLabel') || t('statistics.stats.totalVolume')}</p>
-              <div className="flex items-baseline justify-center gap-2">
-                <span className="text-5xl font-black tracking-tighter text-orange-400">{calculateTotalVolume().toLocaleString()}</span>
-                <span className="text-slate-500 dark:text-white/30 font-black uppercase text-xs">{units === 'metric' ? t('common.kg') : t('common.lb')}</span>
+            {exercises.map((ex, exIdx) => (
+              <div key={exIdx} className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                {/* Exercise header */}
+                <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: '0.5px solid var(--separator)' }}>
+                  <input
+                    value={translateExerciseName(ex.nameKey || resolveExerciseKey(ex.name), ex.name)}
+                    onChange={e => {
+                      const n = [...exercises];
+                      n[exIdx].name = e.target.value;
+                      n[exIdx].nameKey = resolveExerciseKey(e.target.value);
+                      setExercises(n);
+                      scheduleHint(e.target.value, exIdx, n[exIdx].nameKey);
+                    }}
+                    className="flex-1 bg-transparent text-base font-semibold apple-text outline-none"
+                    placeholder="Назва вправи"
+                  />
+                  <button onClick={() => toggleFavorite(ex.name, ex.nameKey)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ background: isFavorite(ex.name, ex.nameKey) ? 'var(--accent-energy)20' : 'var(--bg-card2)' }}>
+                    <Star className="w-4 h-4" style={{ color: isFavorite(ex.name, ex.nameKey) ? 'var(--accent-energy)' : 'var(--text-tertiary)' }} strokeWidth={isFavorite(ex.name, ex.nameKey) ? 2.5 : 2} />
+                  </button>
+                  <button onClick={() => handleRemoveExercise(exIdx)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-card2)' }}>
+                    <Trash2 className="w-4 h-4 apple-text-3" />
+                  </button>
+                </div>
+
+                {/* Hints */}
+                {hints[exIdx] && (hints[exIdx].last || hints[exIdx].best) && (
+                  <div className="flex gap-4 px-4 py-2 text-xs apple-text-3" style={{ borderBottom: '0.5px solid var(--separator)', background: 'var(--bg-card2)' }}>
+                    {hints[exIdx].last && <span>Минулий: <span className="font-semibold apple-text-2">{hints[exIdx].last!.weight}×{hints[exIdx].last!.reps}</span></span>}
+                    {hints[exIdx].best && <span>Рекорд: <span className="font-semibold" style={{ color: 'var(--accent-energy)' }}>{hints[exIdx].best!.weight}×{hints[exIdx].best!.reps}</span></span>}
+                  </div>
+                )}
+
+                {/* Column headers */}
+                <div className="flex items-center gap-3 px-4 py-2" style={{ background: 'var(--bg-card2)' }}>
+                  <div className="w-7 text-center text-xs apple-text-3 font-medium">#</div>
+                  <div className="flex-1 text-center text-xs apple-text-3 font-medium">{units==='metric'?'кг':'lb'}</div>
+                  <div className="flex-1 text-center text-xs apple-text-3 font-medium">Повтори</div>
+                  <div className="w-10" />
+                </div>
+
+                {/* Sets */}
+                {ex.sets.map((s, sIdx) => (
+                  <div key={sIdx} className="flex items-center gap-3 px-4 py-2.5" style={{ borderTop: '0.5px solid var(--separator)' }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold apple-text-2" style={{ background: 'var(--bg-card2)' }}>{s.set}</div>
+                    <input type="number" inputMode="decimal" min={0} step="0.5"
+                      value={s.weight === 0 ? '' : s.weight}
+                      onChange={e => handleUpdateSet(exIdx, sIdx, 'weight', e.target.value)}
+                      className="flex-1 apple-card2 rounded-xl h-10 text-center text-base font-semibold apple-text outline-none"
+                      style={{ border: '0.5px solid var(--separator)' }}
+                      placeholder="0" />
+                    <input type="number" inputMode="numeric" min={0} step="1"
+                      value={s.reps === 0 ? '' : s.reps}
+                      onChange={e => handleUpdateSet(exIdx, sIdx, 'reps', e.target.value)}
+                      className="flex-1 apple-card2 rounded-xl h-10 text-center text-base font-semibold apple-text outline-none"
+                      style={{ border: s.done ? '1px solid var(--accent-exercise)' : '0.5px solid var(--separator)', background: s.done ? 'var(--accent-exercise)15' : undefined }}
+                      placeholder="0" />
+                    <button onClick={() => toggleSetDone(exIdx, sIdx)}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                      style={{ background: s.done ? 'var(--accent-exercise)' : 'var(--bg-card2)', boxShadow: s.done ? '0 2px 8px rgba(48,209,88,0.3)' : 'none' }}>
+                      <Check className="w-5 h-5" style={{ color: s.done ? '#fff' : 'var(--text-tertiary)' }} strokeWidth={s.done ? 3 : 2} />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add set */}
+                <button onClick={() => handleAddSet(exIdx)}
+                  className="w-full py-3 text-sm font-medium transition-colors active:opacity-70"
+                  style={{ color: 'var(--accent-stand)', borderTop: '0.5px solid var(--separator)' }}>
+                  + Додати підхід
+                </button>
               </div>
+            ))}
+
+            {/* Add exercise */}
+            <button onClick={handleAddExercise}
+              className="w-full py-4 rounded-2xl text-sm font-semibold border-2 border-dashed active:scale-[0.98] transition-transform"
+              style={{ color: 'var(--accent-stand)', borderColor: 'var(--accent-stand)40' }}>
+              + Додати вправу
+            </button>
+
+            {/* Total volume */}
+            <div className="apple-card rounded-2xl p-5 text-center" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <p className="text-xs apple-text-3 mb-1">Загальний об'єм</p>
+              <p className="text-4xl font-bold tabular-nums" style={{ color: 'var(--accent-move)' }}>{calculateTotalVolume().toLocaleString()}</p>
+              <p className="text-xs apple-text-3 mt-1">{units==='metric'?'кг':'lb'}</p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

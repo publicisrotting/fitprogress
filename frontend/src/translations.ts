@@ -30,6 +30,7 @@ export const translations = {
     },
     navigation: {
       home: 'Home',
+      diary: 'Diary',
       generator: 'Generate',
       coach: 'Coach',
       statistics: 'Stats',
@@ -560,6 +561,7 @@ export const translations = {
     },
     navigation: {
       home: 'Главная',
+      diary: 'Дневник',
       generator: 'Генерация',
       coach: 'Тренер',
       statistics: 'Статс',
@@ -1094,6 +1096,7 @@ export const translations = {
     },
     navigation: {
       home: 'Головна',
+      diary: 'Щоденник',
       generator: 'Генерація',
       coach: 'Тренер',
       statistics: 'Статс',

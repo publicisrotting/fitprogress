@@ -1,427 +1,318 @@
 import { useState, useEffect } from 'react';
-import { Bell, TrendingUp, Dumbbell, Book, Trophy, Calendar, ChevronRight } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { ScrollArea } from "../ui/scroll-area";
+import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { ScrollArea } from '../ui/scroll-area';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { ApiError, apiJson } from '../../config';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
-interface DashboardScreenProps {
-  onNavigate: (screen: string) => void;
-}
-
-interface DashboardData {
-  user: {
-    name: string;
-    picture: string;
-    weight: number;
-    stats: {
-        workouts: number;
-        achievements: number;
-        streak: number;
-    };
-  };
-  stats: {
-    totalReps: number;
-    workoutsThisMonth: number;
-    weekStreak: { date: string; completed: boolean }[];
-  };
-  todayWorkouts: {
-    _id: string;
-    name: string;
-    details: string;
-    completed: boolean;
-  }[];
-}
+interface DashboardScreenProps { onNavigate: (screen: string) => void; }
 
 interface Notification {
-  _id: string;
-  title: string;
-  text: string;
-  read: boolean;
-  createdAt: string;
-  type?: string;
+  _id: string; title: string; text: string; read: boolean; createdAt: string;
 }
 
 export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { t, language, units } = useSettings();
   const { token, logout } = useAuth();
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  const localeMap: Record<string, string> = {
-    ru: 'ru-RU',
-    uk: 'uk-UA',
-    en: 'en-US'
-  };
+  const weightUnit = units === 'imperial' ? 'lb' : 'kg';
+  const localeMap: Record<string, string> = { ru: 'ru-RU', uk: 'uk-UA', en: 'en-US' };
   const locale = localeMap[language] || 'uk-UA';
-  const weightUnit = units === 'imperial' ? t('common.lb') : t('common.kg');
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-  const loadDashboard = async () => {
+  const load = async () => {
     if (!token) return;
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
-      const [userData, dashboardData, notifData] = await Promise.all([
+      const [userData, dashData, notifData] = await Promise.all([
         apiJson<any>('/api/user/profile', { token }),
         apiJson<any>('/api/user/dashboard', { token }),
-        apiJson<any>('/api/notifications', { token }).catch(() => [])
+        apiJson<any>('/api/notifications', { token }).catch(() => []),
       ]);
-
-      setData({
-        ...dashboardData,
-        user: userData
-      });
-
-      if (Array.isArray(notifData)) setNotifications(notifData);
-      else if (notifData && Array.isArray(notifData.notifications)) setNotifications(notifData.notifications);
-      else setNotifications([]);
-
+      setData({ ...dashData, user: userData });
+      const n = Array.isArray(notifData) ? notifData : (notifData?.notifications || []);
+      setNotifications(n);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        logout();
-        return;
-      }
-      setError(t('common.networkError') || 'Network error');
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
+      if (err instanceof ApiError && err.status === 401) { logout(); return; }
+      setError('Network error');
+    } finally { setLoading(false); }
   };
 
-  const markAllAsRead = async () => {
-    try {
-      await apiJson('/api/notifications/mark-all-read', { method: 'PUT', token });
-      setNotifications((prev: any) => Array.isArray(prev) ? prev.map((n: any) => ({ ...n, read: true })) : []);
-    } catch {
-    }
+  useEffect(() => { load(); }, [token]);
+
+  const markAllRead = async () => {
+    await apiJson('/api/notifications/mark-all-read', { method: 'PUT', token }).catch(() => {});
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  useEffect(() => {
-    if (!token) return;
-    loadDashboard();
-  }, [token]);
+  if (loading) return (
+    <div className="h-full flex items-center justify-center apple-bg">
+      <div className="w-8 h-8 rounded-full border-2 border-[--accent-move] border-t-transparent animate-spin" />
+    </div>
+  );
 
-  const getTodayWorkout = () => {
-    if (!data?.todayWorkouts || !Array.isArray(data.todayWorkouts)) return null;
-    return data.todayWorkouts[0]; // Take the first one for the banner
-  };
+  if (error) return (
+    <div className="h-full flex flex-col items-center justify-center apple-bg px-6 gap-4">
+      <p className="apple-text-2 text-center">{error}</p>
+      <button onClick={load} className="px-6 py-3 rounded-2xl font-semibold text-white" style={{ background: 'var(--accent-move)' }}>
+        {t('common.retry')}
+      </button>
+    </div>
+  );
 
-  const todayWorkout = getTodayWorkout();
+  const streak = data?.user?.stats?.streak || 0;
+  const workoutsMonth = data?.stats?.workoutsThisMonth || 0;
+  const totalReps = data?.stats?.totalReps || 0;
+  const weight = data?.user?.weight || 0;
+  const name = data?.user?.name || '';
+  const picture = data?.user?.picture || '';
 
-  if (loading) {
-    return (
-      <div className="h-full bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="h-full bg-slate-950 flex flex-col items-center justify-center text-center px-6">
-        <p className="text-white/80 mb-4">{error}</p>
-        <button
-          onClick={loadDashboard}
-          className="px-4 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors"
-        >
-          {t('common.retry') || t('common.loading')}
-        </button>
-      </div>
-    );
-  }
-
-  const todayWorkouts = data?.todayWorkouts || [];
-
-  const quickStats = [
-    { 
-      label: t('dashboard.weight'), 
-      value: (data?.user?.weight || 0) + ' ' + weightUnit, 
-      change: '0%', 
-      icon: TrendingUp 
-    },
-    { 
-      label: t('dashboard.reps'), 
-      value: (data?.stats?.totalReps || 0).toLocaleString(), 
-      change: '', 
-      icon: Dumbbell 
-    },
-    { 
-      label: t('dashboard.prMonth'), 
-      value: (data?.stats?.workoutsThisMonth || 0).toString(), 
-      change: '', 
-      icon: Trophy 
-    },
-  ];
-
+  // Week streak
+  const weekStreakSource: { date: string; completed: boolean }[] = Array.isArray(data?.stats?.weekStreak) ? data.stats.weekStreak : [];
   const weekDaysRaw = t('dashboard.weekDays');
-  const normalizedWeekDays = Array.isArray(weekDaysRaw) ? weekDaysRaw : [];
-  const weekStreakSource = Array.isArray(data?.stats?.weekStreak) ? data?.stats?.weekStreak : [];
-  
-  // Create a localized date-based streak
-  const weekStreak = normalizedWeekDays.map((dayLabel: string, idx: number) => {
-    // We assume the week starts from Monday (index 0) to Sunday (index 6)
-    // Find the date for this day in the current week
-    const d = new Date();
-    const dayOfWeek = d.getDay(); // 0 is Sunday, 1-6 is Mon-Sat
-    const diff = (idx + 1) - (dayOfWeek === 0 ? 7 : dayOfWeek);
-    const targetDate = new Date(d);
-    targetDate.setDate(d.getDate() + diff);
-    const dateStr = targetDate.toISOString().split('T')[0];
-    
-    // Check if this date is in the weekStreakSource
-    const streakEntry = weekStreakSource.find((s: any) => s.date === dateStr);
-    
-    return {
-      day: dayLabel,
-      completed: streakEntry ? Boolean(streakEntry.completed) : false,
-      date: dateStr
-    };
-  });
-
+  const weekDayLabels: string[] = Array.isArray(weekDaysRaw) ? weekDaysRaw : ['M','T','W','T','F','S','S'];
   const today = new Date();
   const currentDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
+  const weekStreak = weekDayLabels.map((dayLabel: string, idx: number) => {
+    const d = new Date(today);
+    const diff = (idx + 1) - (today.getDay() === 0 ? 7 : today.getDay());
+    d.setDate(today.getDate() + diff);
+    const dateStr = d.toISOString().split('T')[0];
+    const entry = weekStreakSource.find((s: any) => s.date === dateStr);
+    return { day: dayLabel, completed: entry ? Boolean(entry.completed) : false, isToday: idx === currentDayIndex };
+  });
+
+  // Activity ring progress (move ring = workouts this month / 20 target)
+  const moveProgress = Math.min(workoutsMonth / 20, 1);
+  const exerciseProgress = Math.min(totalReps / 10000, 1);
+  const standProgress = Math.min(streak / 7, 1);
+
+  const Ring = ({ r, progress, color, strokeWidth = 8 }: { r: number; progress: number; color: string; strokeWidth?: number }) => {
+    const circ = 2 * Math.PI * r;
+    const dash = circ * progress;
+    return (
+      <g>
+        <circle cx={60} cy={60} r={r} fill="none" stroke={color} strokeOpacity={0.15} strokeWidth={strokeWidth} />
+        <circle cx={60} cy={60} r={r} fill="none" stroke={color} strokeWidth={strokeWidth}
+          strokeDasharray={`${dash} ${circ}`} strokeDashoffset={circ * 0.25}
+          strokeLinecap="round" style={{ transition: 'stroke-dasharray 1s ease' }} />
+      </g>
+    );
+  };
 
   return (
-    <div className="h-full bg-slate-950 overflow-y-auto pb-24 relative overflow-x-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-orange-500/10 to-transparent pointer-events-none" />
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] aspect-square bg-blue-600/10 blur-[100px] rounded-full pointer-events-none" />
-      <div className="absolute top-[20%] left-[-10%] w-[30%] aspect-square bg-purple-600/10 blur-[80px] rounded-full pointer-events-none" />
-
+    <div className="h-full apple-bg overflow-y-auto pb-28">
       {/* Header */}
-      <div className="relative z-10 p-6 pt-[calc(3rem+env(safe-area-inset-top))] animate-fade-in-up">
-        <div className="flex items-center justify-between mb-8">
+      <div className="px-5 pt-[calc(3rem+env(safe-area-inset-top))] pb-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-white/60 text-sm font-medium mb-1 tracking-wide uppercase">{t('dashboard.hello')}</h1>
-            <h2 className="text-white text-3xl font-bold tracking-tight">
-              {data?.user?.name || t('profile.user')}
-            </h2>
+            <p className="text-xs font-medium apple-text-2 mb-0.5">
+              {new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date())}
+            </p>
+            <h1 className="text-3xl font-bold apple-text tracking-tight">
+              {name ? `${t('dashboard.hello')}, ${name.split(' ')[0]}` : 'FitProgress'}
+            </h1>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-3">
+            {/* Notifications */}
             <Popover>
               <PopoverTrigger asChild>
-                <button className="relative p-2.5 bg-white/5 hover:bg-white/10 rounded-2xl transition-all outline-none border border-white/5 group active:scale-95">
-                  <Bell className="w-6 h-6 text-white/80 group-hover:text-white transition-colors" />
+                <button className="relative w-10 h-10 rounded-full flex items-center justify-center apple-card active:scale-90 transition-transform" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.12)' }}>
+                  <Bell className="w-5 h-5 apple-text-2" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(249,115,22,0.8)] border-2 border-slate-950"></span>
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ background: 'var(--accent-move)' }} />
                   )}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80 bg-slate-900/95 border-white/10 text-white p-0 shadow-2xl backdrop-blur-xl" align="end" sideOffset={10}>
-                <div className="p-4 border-b border-white/5 flex justify-between items-center">
-                  <h4 className="font-bold text-white tracking-tight">{t('dashboard.notificationsTitle')}</h4>
+              <PopoverContent className="w-80 p-0 border-0 shadow-2xl rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }} align="end" sideOffset={8}>
+                <div className="p-4 flex items-center justify-between" style={{ borderBottom: '0.5px solid var(--separator)' }}>
+                  <h4 className="font-semibold apple-text">{t('dashboard.notificationsTitle')}</h4>
                   {unreadCount > 0 && (
-                    <button onClick={markAllAsRead} className="text-xs text-orange-400 hover:text-orange-300 transition-colors font-semibold uppercase tracking-wider">
+                    <button onClick={markAllRead} className="text-xs font-medium" style={{ color: 'var(--accent-stand)' }}>
                       {t('dashboard.markAllRead')}
                     </button>
                   )}
                 </div>
-                <ScrollArea className="max-h-[350px]">
-                  {!Array.isArray(notifications) || notifications.length === 0 ? (
-                    <div className="py-12 px-8 text-center">
-                      <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Bell className="w-6 h-6 text-white/20" />
+                <ScrollArea className="max-h-72">
+                  {notifications.length === 0 ? (
+                    <div className="py-10 text-center">
+                      <Bell className="w-8 h-8 mx-auto mb-3 apple-text-3" />
+                      <p className="text-sm apple-text-2">{t('dashboard.notificationsEmpty')}</p>
+                    </div>
+                  ) : notifications.map(n => (
+                    <div key={n._id} className="px-4 py-3 flex gap-3" style={{ borderBottom: '0.5px solid var(--separator)' }}>
+                      {!n.read && <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0" style={{ background: 'var(--accent-move)' }} />}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold apple-text truncate">{n.title}</p>
+                        <p className="text-xs apple-text-2 mt-0.5 leading-relaxed">{n.text}</p>
                       </div>
-                      <p className="text-white/40 text-sm font-medium">{t('dashboard.notificationsEmpty')}</p>
                     </div>
-                  ) : (
-                    <div className="flex flex-col">
-                      {notifications.map((notification) => (
-                        <div 
-                          key={notification._id} 
-                          className={`p-4 border-b border-white/5 hover:bg-white/5 transition-all cursor-pointer group relative ${!notification.read ? 'bg-white/[0.03]' : ''}`}
-                        >
-                          {!notification.read && (
-                            <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-orange-500" />
-                          )}
-                          <div className="flex justify-between items-start gap-3">
-                            <div>
-                               <h5 className={`text-sm font-bold mb-1 ${!notification.read ? 'text-white' : 'text-white/70'}`}>
-                                  {notification.title}
-                               </h5>
-                               <p className={`text-sm leading-relaxed ${!notification.read ? 'text-white/90' : 'text-white/50'}`}>
-                                  {notification.text}
-                               </p>
-                            </div>
-                            {!notification.read && (
-                              <span className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-1.5 shadow-[0_0_8px_rgba(249,115,22,0.6)]"></span>
-                            )}
-                          </div>
-                          <p className="text-[10px] uppercase font-bold tracking-widest text-white/20 mt-3 group-hover:text-white/40 transition-colors">
-                            {new Date(notification.createdAt).toLocaleString(locale, { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' })}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </ScrollArea>
               </PopoverContent>
             </Popover>
-            <button 
-              onClick={() => onNavigate('profile')} 
-              className="relative p-0.5 bg-gradient-to-tr from-orange-500 to-pink-500 rounded-2xl active:scale-95 transition-transform"
-            >
-              <div className="w-12 h-12 rounded-[14px] overflow-hidden bg-slate-900 border-2 border-slate-950">
-                {data?.user?.picture ? (
-                  <ImageWithFallback
-                    src={data.user.picture}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                    fallback={
-                      <div className="w-full h-full bg-slate-800 flex items-center justify-center text-white text-xl font-bold">
-                        {(data.user.name || 'U').charAt(0).toUpperCase()}
-                      </div>
-                    }
-                  />
-                ) : (
-                  <div className="w-full h-full bg-slate-800 flex items-center justify-center text-white text-xl font-bold">
-                    {(data?.user?.name || t('profile.user')).charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
+
+            {/* Avatar */}
+            <button onClick={() => onNavigate('profile')} className="w-10 h-10 rounded-full overflow-hidden active:scale-90 transition-transform" style={{ boxShadow: '0 0 0 2px var(--accent-move)' }}>
+              {picture ? (
+                <ImageWithFallback src={picture} alt="Avatar" className="w-full h-full object-cover"
+                  fallback={<div className="w-full h-full flex items-center justify-center text-white text-base font-bold" style={{ background: 'var(--accent-move)' }}>{(name || 'U')[0].toUpperCase()}</div>} />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white text-base font-bold" style={{ background: 'var(--accent-move)' }}>{(name || 'U')[0].toUpperCase()}</div>
+              )}
             </button>
           </div>
-        </div>
-
-        <div className="space-y-8">
-          <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-white/10 rounded-[2.8rem] p-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/10 blur-3xl -mr-10 -mt-10" />
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em]">{t('dashboard.hello')}</p>
-                  <h2 className="text-3xl font-black text-white tracking-tight">{data?.user?.name || t('profile.user')}</h2>
-                </div>
-                <button
-                  onClick={() => onNavigate('diary')}
-                  className="px-4 py-2 bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-full"
-                >
-                  {t('dashboard.startWorkout')}
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {quickStats.map((stat, idx) => (
-                  <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-widest mb-1">{stat.label}</p>
-                    <p className="text-lg font-black text-white">{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => onNavigate('diary')}
-              className="bg-white/5 border border-white/10 rounded-[2rem] p-6 text-left hover:bg-white/10 transition-all"
-            >
-              <Calendar className="w-6 h-6 text-orange-400 mb-3" />
-              <p className="text-white font-black">{t('dashboard.diary')}</p>
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-widest">{t('dashboard.workouts')}</p>
-            </button>
-            <button
-              onClick={() => onNavigate('generator')}
-              className="bg-white/5 border border-white/10 rounded-[2rem] p-6 text-left hover:bg-white/10 transition-all"
-            >
-              <Dumbbell className="w-6 h-6 text-indigo-400 mb-3" />
-              <p className="text-white font-black">{t('dashboard.generator')}</p>
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-widest">{t('dashboard.programs')}</p>
-            </button>
-            <button
-              onClick={() => onNavigate('statistics')}
-              className="bg-white/5 border border-white/10 rounded-[2rem] p-6 text-left hover:bg-white/10 transition-all"
-            >
-              <TrendingUp className="w-6 h-6 text-fuchsia-400 mb-3" />
-              <p className="text-white font-black">{t('dashboard.statistics')}</p>
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-widest">{t('dashboard.progress')}</p>
-            </button>
-            <button
-              onClick={() => onNavigate('library')}
-              className="bg-white/5 border border-white/10 rounded-[2rem] p-6 text-left hover:bg-white/10 transition-all"
-            >
-              <Book className="w-6 h-6 text-emerald-400 mb-3" />
-              <p className="text-white font-black">{t('dashboard.library')}</p>
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-widest">{t('dashboard.exercises')}</p>
-            </button>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-black">{t('dashboard.todaysActivity')}</h3>
-              <button
-                onClick={() => onNavigate('diary')}
-                className="text-[10px] font-black text-orange-500 uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-full"
-              >
-                {t('dashboard.viewAll')}
-              </button>
-            </div>
-            {todayWorkout ? (
-              <button
-                onClick={() => onNavigate('diary')}
-                className="w-full bg-white/5 border border-white/10 rounded-[2rem] p-5 text-left hover:bg-white/10 transition-all"
-              >
-                <p className="text-white font-black mb-1">{todayWorkout.name}</p>
-                <p className="text-white/30 text-[10px] font-black uppercase tracking-widest">{todayWorkout.details || t('dashboard.workouts')}</p>
-              </button>
-            ) : (
-              <div className="bg-white/5 border border-white/10 border-dashed rounded-[2rem] p-6 text-center">
-                <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-4">{t('dashboard.noWorkouts')}</p>
-                <button
-                  onClick={() => onNavigate('generator')}
-                  className="px-6 py-3 bg-white text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-[1.5rem]"
-                >
-                  {t('dashboard.startWorkout')}
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-white font-black">{t('dashboard.workoutStreak')}</h3>
-              <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">{t('dashboard.weekDays')[currentDayIndex]}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              {weekStreak.map((day, idx) => {
-                const isToday = idx === currentDayIndex;
-                return (
-                  <div key={idx} className="flex flex-col items-center gap-2">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${day.completed ? 'bg-orange-500 text-white' : 'bg-white/5 text-white/30'} ${isToday ? 'ring-2 ring-orange-500/40' : ''}`}>
-                      {day.completed ? '✓' : ''}
-                    </div>
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${isToday ? 'text-orange-500' : 'text-white/30'}`}>{day.day}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <button
-            onClick={() => onNavigate('gamification')}
-            className="w-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-2xl p-4 mb-20"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="text-white">{t('dashboard.achievements')}</p>
-                  <p className="text-sm text-white/60">
-                    {data?.user?.stats?.achievements || 0} {t('dashboard.earned')}
-                  </p> 
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-white/60" />
-            </div>
-          </button>
         </div>
       </div>
+
+      {/* Activity Ring Card */}
+      <div className="px-5 mb-4">
+        <div className="apple-card rounded-3xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+          <div className="flex items-center gap-6">
+            {/* Rings */}
+            <div className="relative flex-shrink-0">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <Ring r={52} progress={moveProgress}     color="var(--accent-move)"     strokeWidth={9} />
+                <Ring r={40} progress={exerciseProgress} color="var(--accent-exercise)" strokeWidth={9} />
+                <Ring r={28} progress={standProgress}    color="var(--accent-stand)"    strokeWidth={9} />
+              </svg>
+            </div>
+
+            {/* Ring labels */}
+            <div className="flex flex-col gap-3 flex-1">
+              {[
+                { label: t('dashboard.prMonth') || 'Workouts',  value: workoutsMonth, unit: 'this month', color: 'var(--accent-move)' },
+                { label: t('dashboard.reps') || 'Total Reps',   value: totalReps.toLocaleString(), unit: 'reps', color: 'var(--accent-exercise)' },
+                { label: 'Streak',                               value: streak, unit: 'days', color: 'var(--accent-stand)' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                  <div>
+                    <span className="text-lg font-bold apple-text leading-none">{item.value} </span>
+                    <span className="text-xs apple-text-2">{item.unit}</span>
+                    <p className="text-[11px] apple-text-3 mt-0">{item.label}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Weekly Streak */}
+      <div className="px-5 mb-4">
+        <div className="apple-card rounded-3xl p-5" style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Flame className="w-4 h-4" style={{ color: 'var(--accent-energy)' }} />
+              <span className="text-sm font-semibold apple-text">{t('dashboard.workoutStreak')}</span>
+            </div>
+            <span className="text-sm font-bold" style={{ color: 'var(--accent-energy)' }}>{streak} 🔥</span>
+          </div>
+          <div className="flex justify-between">
+            {weekStreak.map((day, i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                  style={{
+                    background: day.completed ? 'var(--accent-move)' : 'var(--bg-card2)',
+                    color: day.completed ? '#fff' : 'var(--text-tertiary)',
+                    outline: day.isToday ? '2px solid var(--accent-move)' : 'none',
+                    outlineOffset: '2px',
+                  }}
+                >
+                  {day.completed ? '✓' : ''}
+                </div>
+                <span className="text-[10px] font-medium apple-text-3">{day.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Start button */}
+      <div className="px-5 mb-4">
+        <button
+          onClick={() => onNavigate('diary')}
+          className="w-full py-4 rounded-2xl text-white font-semibold text-base active:scale-[0.98] transition-transform"
+          style={{ background: 'var(--accent-move)', boxShadow: '0 4px 16px rgba(255,55,95,0.35)' }}
+        >
+          {t('dashboard.startWorkout')}
+        </button>
+      </div>
+
+      {/* Quick nav grid */}
+      <div className="px-5 mb-4">
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { id: 'diary',      icon: Dumbbell, label: t('dashboard.diary'),      sub: t('dashboard.workouts'),  color: 'var(--accent-move)' },
+            { id: 'generator',  icon: Zap,      label: t('dashboard.generator'),  sub: t('dashboard.programs'),  color: 'var(--accent-energy)' },
+            { id: 'statistics', icon: BarChart3, label: t('dashboard.statistics'), sub: t('dashboard.progress'),  color: 'var(--accent-stand)' },
+            { id: 'library',    icon: BookOpen,  label: t('dashboard.library'),    sub: t('dashboard.exercises'), color: 'var(--accent-exercise)' },
+          ].map(item => (
+            <button key={item.id} onClick={() => onNavigate(item.id)}
+              className="apple-card rounded-2xl p-4 text-left active:scale-95 transition-transform flex items-start gap-3"
+              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: item.color + '18' }}>
+                <item.icon className="w-5 h-5" style={{ color: item.color }} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold apple-text">{item.label}</p>
+                <p className="text-xs apple-text-3 mt-0.5">{item.sub}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Today's workouts */}
+      {(data?.todayWorkouts || []).length > 0 && (
+        <div className="px-5 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold apple-text">{t('dashboard.todaysActivity')}</span>
+            <button onClick={() => onNavigate('diary')} className="text-sm font-medium" style={{ color: 'var(--accent-stand)' }}>
+              {t('dashboard.viewAll')}
+            </button>
+          </div>
+          <div className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            {data.todayWorkouts.map((w: any, i: number) => (
+              <button key={w._id} onClick={() => onNavigate('diary')}
+                className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-70"
+                style={{ borderBottom: i < data.todayWorkouts.length - 1 ? '0.5px solid var(--separator)' : 'none' }}
+              >
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-move)' + '18' }}>
+                  <Dumbbell className="w-5 h-5" style={{ color: 'var(--accent-move)' }} />
+                </div>
+                <span className="flex-1 text-sm font-medium apple-text text-left">{w.name}</span>
+                <ChevronRight className="w-4 h-4 apple-text-3" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Weight */}
+      {weight > 0 && (
+        <div className="px-5 mb-4">
+          <div className="apple-card rounded-2xl px-4 py-3.5 flex items-center gap-3" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)' + '18' }}>
+              <span className="text-base">⚖️</span>
+            </div>
+            <div>
+              <p className="text-xs apple-text-3">{t('dashboard.weight')}</p>
+              <p className="text-sm font-semibold apple-text">{weight} {weightUnit}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
