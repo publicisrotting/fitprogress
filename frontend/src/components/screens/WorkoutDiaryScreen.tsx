@@ -617,9 +617,9 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
   const StartModal = () => (
     <div className="fixed inset-0 z-[200] flex items-end">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowStartModal(false)} />
-      <div className="relative w-full apple-card rounded-t-3xl pb-[calc(env(safe-area-inset-bottom)+16px)] animate-slide-up" style={{ borderTop: '0.5px solid var(--separator)' }}>
-        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-6" style={{ background: 'var(--separator)' }} />
-        <div className="px-5 pb-2">
+      <div className="relative w-full apple-card rounded-t-3xl animate-slide-up" style={{ borderTop: '0.5px solid var(--separator)', maxHeight: '85vh' }}>
+        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-5" style={{ background: 'var(--separator)' }} />
+        <div className="overflow-y-auto px-5" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)', maxHeight: 'calc(85vh - 32px)' }}>
           <h2 className="text-xl font-bold apple-text mb-1">Нове тренування</h2>
           <p className="text-sm apple-text-2 mb-5">Обери спосіб старту</p>
           <div className="space-y-2.5">
