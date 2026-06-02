@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
-import { API_URL } from '../../config';
+import { ApiError, apiJson } from '../../config';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 interface DashboardScreenProps {
@@ -46,7 +46,7 @@ interface Notification {
 
 export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const { t, language, units } = useSettings();
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -66,20 +66,10 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
     setLoading(true);
     setError('');
     try {
-      const [profileRes, dashboardRes, notificationsRes] = await Promise.all([
-        fetch(`${API_URL}/api/user/profile`, { headers: { 'x-auth-token': token } }),
-        fetch(`${API_URL}/api/user/dashboard`, { headers: { 'x-auth-token': token } }),
-        fetch(`${API_URL}/api/notifications`, { headers: { 'x-auth-token': token } })
-      ]);
-      
-      if (!profileRes.ok || !dashboardRes.ok) {
-        throw new Error(t('common.networkError') || 'Network error');
-      }
-      
       const [userData, dashboardData, notifData] = await Promise.all([
-        profileRes.json(), 
-        dashboardRes.json(),
-        notificationsRes.json().catch(() => [])
+        apiJson<any>('/api/user/profile', { token }),
+        apiJson<any>('/api/user/dashboard', { token }),
+        apiJson<any>('/api/notifications', { token }).catch(() => [])
       ]);
 
       setData({
@@ -91,7 +81,11 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       else if (notifData && Array.isArray(notifData.notifications)) setNotifications(notifData.notifications);
       else setNotifications([]);
 
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        logout();
+        return;
+      }
       setError(t('common.networkError') || 'Network error');
       setData(null);
     } finally {
@@ -101,15 +95,9 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   const markAllAsRead = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/notifications/mark-all-read`, {
-        method: 'PUT',
-        headers: { 'x-auth-token': token || '' }
-      });
-      if (res.ok) {
-        setNotifications((prev: any) => Array.isArray(prev) ? prev.map((n: any) => ({ ...n, read: true })) : []);
-      }
-    } catch (error) {
-      console.error('Error marking notifications as read:', error);
+      await apiJson('/api/notifications/mark-all-read', { method: 'PUT', token });
+      setNotifications((prev: any) => Array.isArray(prev) ? prev.map((n: any) => ({ ...n, read: true })) : []);
+    } catch {
     }
   };
 

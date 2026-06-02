@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -124,6 +125,75 @@ router.put('/profile', auth, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
+  }
+});
+
+router.put('/email', auth, async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email і пароль обовʼязкові' });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: 'Неможливо змінити email для Google-акаунту' });
+    }
+
+    const isMatch = await bcrypt.compare(String(password), user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Невірний пароль' });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail, _id: { $ne: user._id } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Користувач з таким email вже існує' });
+    }
+
+    user.email = normalizedEmail;
+    await user.save();
+
+    res.json({ success: true, email: user.email });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Помилка сервера' });
+  }
+});
+
+router.put('/password', auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Поточний та новий пароль обовʼязкові' });
+    }
+
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: 'Неможливо змінити пароль для Google-акаунту' });
+    }
+
+    const isMatch = await bcrypt.compare(String(currentPassword), user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Невірний поточний пароль' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(String(newPassword), salt);
+    await user.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Помилка сервера' });
   }
 });
 

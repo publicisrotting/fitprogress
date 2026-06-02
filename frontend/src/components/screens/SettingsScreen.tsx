@@ -1,4 +1,4 @@
-import { ChevronLeft, Bell, Crown, Shield, Globe, Moon, Smartphone, Lock, Mail, LogOut, Server, X, Check } from 'lucide-react';
+import { ChevronLeft, Bell, Crown, Globe, Moon, Smartphone, Lock, Mail, LogOut, Server, X, Check } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -23,18 +23,14 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showUnitsModal, setShowUnitsModal] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
-  const [show2FAModal, setShow2FAModal] = useState(false);
   
   // Forms state
   const [emailForm, setEmailForm] = useState({ email: '', password: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  const [twoFactorCode, setTwoFactorCode] = useState('');
   
   // Status state
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [twoFactorSecret, setTwoFactorSecret] = useState('');
 
   const handleHaptic = () => {
     if (window.navigator && (window.navigator as any).vibrate) {
@@ -172,27 +168,6 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
               </div>
               <ChevronLeft className="w-5 h-5 text-white/10 rotate-180 group-hover:text-white/40 transition-all" />
             </button>
-            <div className="w-full flex items-center justify-between p-6 group">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                  <Shield className="w-5 h-5 text-white/40 group-hover:text-purple-400 transition-colors" />
-                </div>
-                <div className="text-left">
-                  <p className="text-white font-bold tracking-tight">{t('settings.twoFactor')}</p>
-                  <p className={`text-[10px] font-black uppercase tracking-widest ${userData?.isTwoFactorEnabled ? 'text-green-500' : 'text-white/20'}`}>
-                    {userData?.isTwoFactorEnabled ? t('profile.enabled') : t('common.disabled')}
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => { handleHaptic(); userData?.isTwoFactorEnabled ? handleDisable2FA() : handleEnable2FA(); }}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${
-                  userData?.isTwoFactorEnabled ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-white text-slate-950 shadow-lg'
-                }`}
-              >
-                {userData?.isTwoFactorEnabled ? t('settings.disable') : t('settings.enable')}
-              </button>
-            </div>
           </div>
         </section>
 
@@ -325,17 +300,6 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
                 {units === unit.id && <Check className="w-5 h-5 text-blue-500" />}
               </button>
             ))}
-          </div>
-        </SettingsModal>
-      )}
-
-      {show2FAModal && (
-        <SettingsModal title={t('settings.twoFactorSetup')} onClose={() => setShow2FAModal(false)} isLoading={isLoading} message={message}>
-          <div className="flex flex-col items-center text-center space-y-6">
-            <p className="text-white/60 text-sm">{t('settings.twoFactorScan')}</p>
-            <div className="p-4 bg-white rounded-3xl"><img src={qrCodeUrl} alt="QR" className="w-48 h-48" /></div>
-            <input type="text" maxLength={6} value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, ''))} className="w-full bg-white/5 text-white text-center text-2xl font-black tracking-[0.5em] px-5 py-4 rounded-2xl border border-white/10 focus:border-orange-500 outline-none" placeholder="000000" />
-            <button onClick={handleVerify2FA} disabled={twoFactorCode.length !== 6 || isLoading} className="w-full py-5 bg-white text-slate-950 font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all">{t('settings.verify')}</button>
           </div>
         </SettingsModal>
       )}

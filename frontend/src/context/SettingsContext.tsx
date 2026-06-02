@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { API_URL } from '../config';
+import { ApiError, apiJson } from '../config';
 import { translations } from '../translations';
 
 type Language = 'en' | 'ru' | 'uk';
@@ -60,45 +60,29 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   // Sync settings with backend
   useEffect(() => {
     if (token) {
-      // Load settings
-      fetch(`${API_URL}/api/user/settings`, {
-        headers: {
-          'x-auth-token': token
-        }
-      })
-      .then(res => {
-        if (res.status === 401) {
-          logout();
-          return null;
-        }
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then(data => {
-        if (!data) return;
-        if (data.language) setLanguageState(data.language);
-        if (data.theme) setThemeState(data.theme);
-        if (data.units) setUnitsState(data.units);
-      })
-      .catch(() => {});
+      apiJson<{ language?: Language; theme?: Theme; units?: UnitSystem }>('/api/user/settings', { token })
+        .then((data) => {
+          if (!data) return;
+          if (data.language) setLanguageState(data.language);
+          if (data.theme) setThemeState(data.theme);
+          if (data.units) setUnitsState(data.units);
+        })
+        .catch((err) => {
+          if (err instanceof ApiError && err.status === 401) logout();
+        });
     }
   }, [token, logout]);
 
   // Save settings to backend
   useEffect(() => {
     if (token) {
-      fetch(`${API_URL}/api/user/settings`, {
+      apiJson('/api/user/settings', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token
-        },
-        body: JSON.stringify({ language, theme, units })
-      })
-        .then(res => {
-          if (res.status === 401) logout();
-        })
-        .catch(() => {});
+        token,
+        body: { language, theme, units }
+      }).catch((err) => {
+        if (err instanceof ApiError && err.status === 401) logout();
+      });
     }
   }, [language, theme, units, token, logout]);
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dumbbell, Mail, Lock, Eye, EyeOff, AlertCircle, ChevronLeft, ArrowRight, Chrome } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
-import { API_URL } from '../../config';
+import { apiJson } from '../../config';
 
 interface LoginScreenProps {
   onLogin: () => void;
@@ -18,11 +18,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-
-  // 2FA state
-  const [isTwoFactorStep, setIsTwoFactorStep] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [tempUserId, setTempUserId] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -36,32 +31,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
     try {
       if (isForgotPassword) {
-        const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        await apiJson('/api/auth/forgot-password', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: { email }
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Щось пішло не так');
         setSuccessMessage('Інструкції надіслано на пошту');
-        return;
-      }
-
-      if (isTwoFactorStep) {
-        const response = await fetch(`${API_URL}/api/auth/2fa/validate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: tempUserId, token: twoFactorCode }),
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || 'Невірний код');
-        
-        if (data.token) {
-           login(data.token, data.userId);
-           onLogin();
-        } else {
-           throw new Error('Server returned no token');
-        }
         return;
       }
 
@@ -73,24 +47,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       const body: any = { email, password };
       if (!isLogin) body.name = name;
 
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const data = await apiJson<{ token: string; userId: string }>(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Щось пішло не так');
-      }
-
-      if (data.twoFactorRequired) {
-        setIsTwoFactorStep(true);
-        setTempUserId(data.userId);
-        setLoading(false);
-        return;
-      }
 
       login(data.token, data.userId);
       onLogin();
@@ -168,59 +128,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-orange-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {loading ? 'Відправка...' : 'Відправити'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  if (isTwoFactorStep) {
-    return (
-      <div className={containerClasses}>
-        {decorativeElements}
-        <div className={glassClasses}>
-          <button 
-            onClick={() => { setIsTwoFactorStep(false); setTwoFactorCode(''); setError(''); }}
-            className="flex items-center gap-2 text-white/40 mb-8 hover:text-white transition-colors group"
-          >
-            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Назад до входу</span>
-          </button>
-
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-black text-white tracking-tight mb-2">Захист</h1>
-            <p className="text-white/40 text-sm font-medium">Введіть код з Google Authenticator</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className={labelClasses}>Код підтвердження</label>
-              <input
-                type="text"
-                value={twoFactorCode}
-                onChange={(e) => setTwoFactorCode(e.target.value)}
-                className="w-full px-4 py-5 bg-white/5 border border-white/10 rounded-2xl text-white text-center text-3xl font-black tracking-[0.5em] focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                placeholder="000000"
-                maxLength={6}
-                required
-                autoFocus
-              />
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold uppercase tracking-wider">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || twoFactorCode.length !== 6}
-              className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-blue-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {loading ? 'Перевірка...' : 'Підтвердити'}
             </button>
           </form>
         </div>
@@ -374,15 +281,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 <GoogleLogin
                   onSuccess={async (credentialResponse) => {
                     try {
-                      const response = await fetch(`${API_URL}/api/auth/google`, {
+                      const data = await apiJson<{ token: string; userId: string }>('/api/auth/google', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token: credentialResponse.credential }),
+                        body: { token: credentialResponse.credential }
                       });
-
-                      const data = await response.json();
-                      if (!response.ok) throw new Error(data.message);
-
                       login(data.token, data.userId);
                       onLogin();
                     } catch (err: any) {

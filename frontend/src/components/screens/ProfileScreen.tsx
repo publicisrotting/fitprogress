@@ -2,7 +2,7 @@ import { Edit2, Settings, LogOut, Trophy, Calendar, TrendingUp, Bell, Crown, Shi
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
-import { API_URL } from '../../config';
+import { ApiError, apiJson } from '../../config';
 import { useSettings } from '../../context/SettingsContext';
 import PremiumModal from '../modals/PremiumModal';
 
@@ -40,57 +40,23 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/user/profile`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
-      
-      if (response.status === 401) {
+      const [profile, workoutsData] = await Promise.all([
+        apiJson<any>('/api/user/profile', { token }),
+        apiJson<any[]>('/api/workouts', { token }).catch(() => [])
+      ]);
+      setUserData(profile);
+      resetEditFormFromUser(profile);
+      setWorkouts(Array.isArray(workoutsData) ? workoutsData : []);
+    } catch (error: any) {
+      if (error instanceof ApiError && error.status === 401) {
         toast.error(t('auth.sessionExpired'));
         onLogout();
         return;
       }
-
-      if (response.ok) {
-        const data = await response.json();
-        setUserData(data);
-        resetEditFormFromUser(data);
-      } else {
-        let message = '';
-        try {
-          const contentType = response.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            const data = await response.json();
-            message = data?.message || data?.msg || '';
-          } else {
-            message = await response.text();
-          }
-        } catch {
-          message = '';
-        }
-        const fallback = t('common.error') || 'Error loading profile';
-        setUserData(null);
-        setErrorMessage(message || fallback);
-        return;
-      }
-
-      const workoutsResponse = await fetch(`${API_URL}/api/workouts`, {
-        headers: {
-          'x-auth-token': token
-        }
-      });
-      if (workoutsResponse.ok) {
-        const workoutsData = await workoutsResponse.json();
-        setWorkouts(workoutsData);
-      }
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
       const msg = t('common.networkError') || 'Network Error';
       setUserData(null);
-      setErrorMessage(msg);
-      toast.error(msg);
+      setErrorMessage(error?.message || msg);
+      toast.error(error?.message || msg);
     } finally {
       setLoading(false);
     }
@@ -113,27 +79,21 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
 
   const handleUpdateProfile = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/user/profile`, {
+      const updatedUser = await apiJson<any>('/api/user/profile', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': token || ''
-        },
-        body: JSON.stringify(editForm)
+        token,
+        body: editForm
       });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        setUserData(updatedUser);
-        resetEditFormFromUser(updatedUser);
-        setIsEditing(false);
-        toast.success(t('profile.updateSuccess') || 'Профіль оновлено');
-      } else {
-        toast.error(t('common.error') || 'Помилка оновлення');
+      setUserData(updatedUser);
+      resetEditFormFromUser(updatedUser);
+      setIsEditing(false);
+      toast.success(t('profile.updateSuccess') || 'Профіль оновлено');
+    } catch (error: any) {
+      if (error instanceof ApiError && error.status === 401) {
+        onLogout();
+        return;
       }
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error(t('common.networkError') || 'Помилка мережі');
+      toast.error(error?.message || t('common.networkError') || 'Помилка мережі');
     }
   };
 
@@ -145,13 +105,18 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
     formData.append('avatar', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/user/avatar`, {
+      const response = await fetch(`/api/user/avatar`, {
         method: 'POST',
         headers: {
           'x-auth-token': token || ''
         },
         body: formData
       });
+
+      if (response.status === 401) {
+        onLogout();
+        return;
+      }
 
       if (response.ok) {
         const updatedUser = await response.json();
