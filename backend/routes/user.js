@@ -68,23 +68,87 @@ router.get('/dashboard', auth, async (req, res) => {
       await user.save();
     }
 
-    // Mock dashboard data - replace with real aggregations later
+    const Workout = require('../models/Workout');
+
+    // Real workout aggregations
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfToday);
+    const dayOfWeek = startOfToday.getDay(); // 0=Sun
+    const daysFromMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+    startOfWeek.setDate(startOfToday.getDate() - daysFromMonday);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [allWorkouts, todayWorkoutDocs] = await Promise.all([
+      Workout.find({ user: req.user.userId }).select('date exercises duration name programGoal programDayIndex programTitle source').lean(),
+      Workout.find({ user: req.user.userId, date: { $gte: startOfToday } }).lean()
+    ]);
+
+    // Total reps across all workouts
+    let totalReps = 0;
+    allWorkouts.forEach(w => {
+      (w.exercises || []).forEach(ex => {
+        (ex.sets || []).forEach(s => { totalReps += (s.reps || 0); });
+      });
+    });
+
+    // Workouts this month
+    const workoutsThisMonth = allWorkouts.filter(w => new Date(w.date) >= startOfMonth).length;
+
+    // Week streak — one entry per day Mon-Sun
+    const weekStreak = [];
+    for (let i = 0; i < 7; i++) {
+      const dayStart = new Date(startOfWeek);
+      dayStart.setDate(startOfWeek.getDate() + i);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayStart.getDate() + 1);
+      const dateStr = dayStart.toISOString().split('T')[0];
+      const completed = allWorkouts.some(w => {
+        const d = new Date(w.date);
+        return d >= dayStart && d < dayEnd;
+      });
+      weekStreak.push({ date: dateStr, completed });
+    }
+
+    // Update streak counter
+    let streakCount = 0;
+    const checkDate = new Date(startOfToday);
+    while (true) {
+      const dayStart = new Date(checkDate);
+      const dayEnd = new Date(checkDate);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+      const hasWorkout = allWorkouts.some(w => {
+        const d = new Date(w.date);
+        return d >= dayStart && d < dayEnd;
+      });
+      if (!hasWorkout) break;
+      streakCount++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    if (user.stats.streak !== streakCount) {
+      user.stats.streak = streakCount;
+      await user.save();
+    }
+
     const dashboardData = {
       user: {
         name: user.name,
         picture: user.picture,
         weight: user.weight,
-        stats: user.stats || { workouts: 0, achievements: 0, streak: 0 }
+        stats: { workouts: user.stats?.workouts || 0, achievements: user.stats?.achievements || 0, streak: streakCount }
       },
       stats: {
-        totalReps: 1250, // Mock
-        workoutsThisMonth: user.stats?.workouts || 0,
-        weekStreak: [
-          { completed: true }, { completed: false }, { completed: true }, 
-          { completed: true }, { completed: false }, { completed: false }, { completed: false }
-        ]
+        totalReps,
+        workoutsThisMonth,
+        weekStreak
       },
-      todayWorkouts: [] // Add real workout logic here
+      todayWorkouts: todayWorkoutDocs.map(w => ({
+        _id: w._id,
+        name: w.name,
+        details: `${(w.exercises || []).length} exercises`,
+        completed: false
+      }))
     };
 
     res.json(dashboardData);
@@ -96,32 +160,40 @@ router.get('/dashboard', auth, async (req, res) => {
 
 // Update user profile
 router.put('/profile', auth, async (req, res) => {
-  const { name, age, gender, weight, height, goal } = req.body;
+  const { name, age, gender, weight, height, goal, experienceLevel, injuries } = req.body;
 
-  // Build profile object
   const profileFields = {};
-  if (name) profileFields.name = name;
-  if (age) profileFields.age = age;
-  if (gender) profileFields.gender = gender;
-  if (weight) profileFields.weight = weight;
-  if (height) profileFields.height = height;
-  if (goal) profileFields.goal = goal;
+  if (name !== undefined) profileFields.name = name;
+  if (age !== undefined) profileFields.age = Number(age) || undefined;
+  if (gender !== undefined) profileFields.gender = gender;
+  if (weight !== undefined) {
+    const w = Number(weight);
+    if (w > 0 && w < 500) {
+      profileFields.weight = w;
+      profileFields.$push = { bodyWeightHistory: { date: new Date(), weight: w } };
+    }
+  }
+  if (height !== undefined) profileFields.height = Number(height) || undefined;
+  if (goal !== undefined) profileFields.goal = goal;
+  if (experienceLevel !== undefined && ['beginner', 'intermediate', 'advanced'].includes(experienceLevel)) {
+    profileFields.experienceLevel = experienceLevel;
+  }
+  if (injuries !== undefined) profileFields.injuries = String(injuries).slice(0, 500);
 
   try {
-    let user = await User.findById(req.user.userId);
+    const push = profileFields.$push;
+    delete profileFields.$push;
+    const updateOp = { $set: profileFields };
+    if (push) updateOp.$push = push;
 
-    if (user) {
-      // Update
-      user = await User.findByIdAndUpdate(
-        req.user.userId,
-        { $set: profileFields },
-        { new: true }
-      ).select('-password');
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      updateOp,
+      { new: true }
+    ).select('-password');
 
-      return res.json(user);
-    } else {
-      return res.status(404).json({ msg: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+    return res.json(user);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');

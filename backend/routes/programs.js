@@ -207,9 +207,59 @@ router.post('/generate', auth, async (req, res) => {
         ],
       },
     };
+    // Extend templates to support up to 6 days for all goals
+    const extendedMassUk = [
+      'День 1: Груди + Трицепс',
+      'День 2: Спина + Біцепс',
+      'День 3: Ноги + Плечі',
+      'День 4: Верх тіла (повтор)',
+      'День 5: Низ тіла (повтор)',
+      'День 6: Плечі + Кор',
+    ];
+    const extendedMassRu = [
+      'День 1: Грудь + Трицепс',
+      'День 2: Спина + Бицепс',
+      'День 3: Ноги + Плечи',
+      'День 4: Верх тела (повтор)',
+      'День 5: Низ тела (повтор)',
+      'День 6: Плечи + Кор',
+    ];
+    const extendedMassEn = [
+      'Day 1: Chest + Triceps',
+      'Day 2: Back + Biceps',
+      'Day 3: Legs + Shoulders',
+      'Day 4: Upper Body (repeat)',
+      'Day 5: Lower Body (repeat)',
+      'Day 6: Shoulders + Core',
+    ];
+
+    // Replace short mass templates with 6-day versions
+    dayTitles.uk.mass = extendedMassUk;
+    dayTitles.ru.mass = extendedMassRu;
+    dayTitles.en.mass = extendedMassEn;
+
+    // Ensure all goals have at least 6 entries (repeat last day)
+    ['uk', 'ru', 'en'].forEach(l => {
+      Object.keys(dayTitles[l]).forEach(g => {
+        const arr = dayTitles[l][g];
+        while (arr.length < 6) {
+          arr.push(arr[arr.length - 1]);
+        }
+      });
+    });
+
     const chosenLang = dayTitles[lang] ? lang : 'uk';
     const templateDays = dayTitles[chosenLang] && dayTitles[chosenLang][goal] ? dayTitles[chosenLang][goal] : dayTitles['uk'][goal] || dayTitles['uk']['mass'];
-    const weekPlan = (templateDays || []).slice(0, Math.min(days, (templateDays || []).length)).map((d, idx) => {
+    const clampedDays = Math.max(2, Math.min(Number(days) || 3, 6));
+    // Adjust volume based on experience level
+    const experienceSets = {
+      beginner: baseSets - 1,
+      intermediate: baseSets,
+      advanced: baseSets + 1,
+    };
+    const effectiveSets = (experienceSets[user.experienceLevel] || baseSets) + weightFactor;
+
+    const weekPlan = (templateDays || []).slice(0, clampedDays).map((d, idx) => {
       const musclesByGoal = {
         mass: [
           ['chest', 'arms'],
@@ -415,7 +465,7 @@ router.post('/generate', auth, async (req, res) => {
         picked.forEach(ex => {
           dayExercises.push({
             nameKey: ex.nameKey,
-            sets,
+            sets: effectiveSets,
             reps: repScheme,
             muscle: m,
           });

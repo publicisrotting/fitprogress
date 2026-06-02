@@ -115,7 +115,7 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   if (loading) {
     return (
-      <div className="h-full bg-[#262135] flex items-center justify-center">
+      <div className="h-full bg-slate-950 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
@@ -123,13 +123,13 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
 
   if (error) {
     return (
-      <div className="h-full bg-[#262135] flex flex-col items-center justify-center text-center px-6">
+      <div className="h-full bg-slate-950 flex flex-col items-center justify-center text-center px-6">
         <p className="text-white/80 mb-4">{error}</p>
         <button
           onClick={loadDashboard}
           className="px-4 py-2 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors"
         >
-          {t('common.loading')}
+          {t('common.retry') || t('common.loading')}
         </button>
       </div>
     );

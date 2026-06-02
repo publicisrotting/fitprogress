@@ -10,6 +10,8 @@ import SocialScreen from './components/screens/SocialScreen';
 import GamificationScreen from './components/screens/GamificationScreen';
 import SettingsScreen from './components/screens/SettingsScreen';
 import WorkoutHistoryScreen from './components/screens/WorkoutHistoryScreen';
+import CoachScreen from './components/screens/CoachScreen';
+import OnboardingScreen from './components/screens/OnboardingScreen';
 import BottomNavigation from './components/BottomNavigation';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -21,11 +23,18 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
   const { isAuthenticated, logout } = useAuth();
   const { theme } = useSettings();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
-      setCurrentScreen('dashboard');
+      const done = localStorage.getItem('onboardingComplete');
+      if (!done) {
+        setShowOnboarding(true);
+      } else {
+        setCurrentScreen('dashboard');
+      }
     } else {
+      setShowOnboarding(false);
       setCurrentScreen('login');
     }
   }, [isAuthenticated]);
@@ -64,6 +73,8 @@ export default function App() {
         return <SettingsScreen onNavigate={setCurrentScreen} onLogout={logout} />;
       case 'history':
         return <WorkoutHistoryScreen onNavigate={setCurrentScreen} />;
+      case 'coach':
+        return <CoachScreen onNavigate={setCurrentScreen} />;
       default:
         return <DashboardScreen onNavigate={setCurrentScreen} />;
     }
@@ -72,8 +83,12 @@ export default function App() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white overflow-hidden">
       <div id="app-container" className="w-full h-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white overflow-hidden relative">
-        {renderScreen()}
-        {isAuthenticated && <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />}
+        {isAuthenticated && showOnboarding ? (
+          <OnboardingScreen onComplete={() => { setShowOnboarding(false); setCurrentScreen('dashboard'); }} />
+        ) : (
+          renderScreen()
+        )}
+        {isAuthenticated && !showOnboarding && <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />}
         <Toaster position="top-center" richColors theme={theme} />
       </div>
     </div>

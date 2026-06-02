@@ -1,4 +1,4 @@
-import { Home, Dumbbell, BarChart3, User } from 'lucide-react';
+import { Home, Dumbbell, BarChart3, User, Brain } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
 interface BottomNavigationProps {
@@ -8,10 +8,11 @@ interface BottomNavigationProps {
 
 export default function BottomNavigation({ currentScreen, onNavigate }: BottomNavigationProps) {
   const { t } = useSettings();
-  
+
   const navItems = [
     { id: 'dashboard', label: t('navigation.home'), icon: Home },
     { id: 'generator', label: t('navigation.generator'), icon: Dumbbell },
+    { id: 'coach', label: t('navigation.coach') || 'Coach', icon: Brain },
     { id: 'statistics', label: t('navigation.statistics'), icon: BarChart3 },
     { id: 'profile', label: t('navigation.profile'), icon: User },
   ];

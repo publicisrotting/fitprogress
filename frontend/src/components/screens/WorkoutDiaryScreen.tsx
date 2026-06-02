@@ -40,6 +40,9 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
   const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
   const [restTimer, setRestTimer] = useState(0);
   const [isRestActive, setIsRestActive] = useState(false);
+  const [workoutElapsed, setWorkoutElapsed] = useState(0); // seconds
+  const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
+  const workoutTimerRef = useRef<any>(null);
   const [hints, setHints] = useState<Record<number, { last: { weight: number; reps: number; date: string } | null; best: { weight: number; reps: number; date: string } | null }>>({});
   const hintTimers = useRef<Record<number, any>>({});
   const exerciseNameToKey = useRef<Record<string, string> | null>(null);
@@ -167,6 +170,18 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
     return () => clearInterval(interval);
   }, [isRestActive, restTimer]);
 
+  // Workout elapsed timer
+  useEffect(() => {
+    if (view === 'active' && workoutStartTime) {
+      workoutTimerRef.current = setInterval(() => {
+        setWorkoutElapsed(Math.floor((Date.now() - workoutStartTime) / 1000));
+      }, 1000);
+    } else {
+      if (workoutTimerRef.current) clearInterval(workoutTimerRef.current);
+    }
+    return () => { if (workoutTimerRef.current) clearInterval(workoutTimerRef.current); };
+  }, [view, workoutStartTime]);
+
   const fetchWorkouts = async () => {
     setLoading(true);
     try {
@@ -176,7 +191,7 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
       const data = await res.json();
       setWorkouts(Array.isArray(data) ? data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()) : []);
     } catch (e) {
-      toast.error('Помилка завантаження');
+      toast.error(t('common.networkError') || 'Error loading workouts');
     } finally {
       setLoading(false);
     }
@@ -203,6 +218,8 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
     scheduleHint(defaultName, 0, defaultKey);
     setEditingWorkoutId(null);
     setExpandedWorkoutId(null);
+    setWorkoutStartTime(Date.now());
+    setWorkoutElapsed(0);
   };
 
   const openWorkout = (w: any) => {
@@ -510,21 +527,21 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
         headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
         body: JSON.stringify({
           name: workoutName,
-          duration: 0,
+          duration: Math.max(1, Math.round(workoutElapsed / 60)),
           exercises: cleanedExercises,
           date: workoutDate || serverNow
         })
       });
       
       if (res.ok) {
-        toast.success('Тренування збережено!');
+        toast.success(t('common.success') || 'Saved!');
         setView('list');
         setEditingWorkoutId(null);
       } else {
-        toast.error('Помилка при збереженні');
+        toast.error(t('common.error') || 'Save failed');
       }
     } catch (e) {
-      toast.error('Помилка мережі');
+      toast.error(t('common.networkError') || 'Network error');
     } finally {
       setLoading(false);
     }
@@ -907,6 +924,9 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
               </button>
               <div className="text-center">
                 <p className="text-[10px] font-black text-slate-500 dark:text-white/30 uppercase tracking-[0.3em]">{t('common.workout') || 'Тренировка'}</p>
+                {view === 'active' && workoutStartTime && (
+                  <p className="text-xs font-black text-orange-400 tabular-nums mt-0.5">{formatTime(workoutElapsed)}</p>
+                )}
               </div>
 
               {view === 'active' ? (

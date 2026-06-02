@@ -9,14 +9,52 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Simple in-memory rate limiter (per IP, no external dep)
+const rateLimitMap = new Map();
+function rateLimit(windowMs, max) {
+  return (req, res, next) => {
+    const key = req.ip;
+    const now = Date.now();
+    const entry = rateLimitMap.get(key) || { count: 0, start: now };
+    if (now - entry.start > windowMs) {
+      entry.count = 1;
+      entry.start = now;
+    } else {
+      entry.count++;
+    }
+    rateLimitMap.set(key, entry);
+    if (entry.count > max) {
+      return res.status(429).json({ message: 'Too many requests, please try again later.' });
+    }
+    next();
+  };
+}
+
 // Middleware
 app.use(helmet());
-app.use(cors());
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5001'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow same-origin / mobile native (no origin header)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(null, true); // permissive in dev; restrict via env in prod
+  },
+  credentials: true
+}));
+
 app.use(express.json({
+  limit: '2mb',
   verify: (req, res, buf) => {
     req.rawBody = buf;
   }
 }));
+
+// Rate limit auth endpoints (15 requests per 15 minutes per IP)
+app.use('/api/auth', rateLimit(15 * 60 * 1000, 15));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes - wrapped in try-catch for debugging

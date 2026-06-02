@@ -141,8 +141,8 @@ router.post('/forgot-password', async (req, res) => {
 
     await user.save();
 
-    // In a real app, send email here. For now, return token
-    res.json({ message: 'Посилання для відновлення надіслано (симуляція)', resetToken });
+    // In a real app, send email here. Token is NOT returned for security.
+    res.json({ message: 'Посилання для відновлення надіслано (симуляція)' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Помилка сервера' });
