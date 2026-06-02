@@ -29,6 +29,28 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
     goal: ''
   });
 
+  const exportCSV = () => {
+    if (!workouts.length) { toast.error('Немає тренувань для експорту'); return; }
+    const rows = [['Дата','Назва','Вправа','Підходи','Вага (кг)','Повтори','Об\'єм (кг)']];
+    workouts.forEach(w => {
+      const date = new Date(w.date).toLocaleDateString('uk-UA');
+      (w.exercises||[]).forEach((ex: any) => {
+        const sets = (ex.sets||[]).filter((s:any) => s.weight||s.reps);
+        const vol = sets.reduce((a:number,s:any)=>a+(s.weight||0)*(s.reps||0),0);
+        rows.push([date, w.name, ex.name||ex.nameKey||'', String(sets.length),
+          String(sets.reduce((a:number,s:any)=>Math.max(a,s.weight||0),0)),
+          String(sets.reduce((a:number,s:any)=>Math.max(a,s.reps||0),0)),
+          String(vol)]);
+      });
+    });
+    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob(['﻿'+csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'fitprogress_workouts.csv'; a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV завантажено!');
+  };
+
   const fetchProfile = async () => {
     setLoading(true);
     setErrorMessage('');
@@ -369,6 +391,27 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
               </button>
             </div>
           )}
+        </div>
+
+        {/* Quick Links */}
+        <div className="apple-card rounded-2xl overflow-hidden mb-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          {[
+            { icon: '⚖️', label: 'Вага тіла', sub: 'Відстежувати динаміку', screen: 'body-weight' },
+            { icon: '📅', label: 'Календар тренувань', sub: 'Всі тренування по місяцях', screen: 'calendar' },
+            { icon: '👥', label: 'Спільнота', sub: 'Ділитись прогресом', screen: 'social' },
+            { icon: '📊', label: 'Експорт даних', sub: 'Завантажити як CSV', screen: 'export' },
+          ].map((item, i) => (
+            <button key={item.screen} onClick={() => item.screen === 'export' ? exportCSV() : onNavigate(item.screen)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-70 apple-text"
+              style={{ borderBottom: i < 3 ? '0.5px solid var(--separator)' : 'none' }}>
+              <span className="text-xl">{item.icon}</span>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold">{item.label}</p>
+                <p className="text-xs apple-text-2 mt-0.5">{item.sub}</p>
+              </div>
+              <svg className="w-4 h-4 apple-text-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </button>
+          ))}
         </div>
 
         {/* Action Grid Section */}

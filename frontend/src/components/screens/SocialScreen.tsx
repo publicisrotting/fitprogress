@@ -1,328 +1,131 @@
-import { useState } from 'react';
-import { ChevronLeft, UserPlus, Trophy, TrendingUp, Share2, Users, MessageCircle, Heart, Award, Search, Bell } from 'lucide-react';
-import { useSettings } from '../../context/SettingsContext';
+import { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Share2, Trophy, Flame, Dumbbell, TrendingUp, Users, UserPlus } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../config';
 
-interface SocialScreenProps {
-  onNavigate: (screen: string) => void;
-}
+interface Props { onNavigate: (s: string) => void; }
 
-export default function SocialScreen({ onNavigate }: SocialScreenProps) {
-  const { t } = useSettings();
-  const [activeTab, setActiveTab] = useState('friends');
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+const COMMUNITY_POSTS = [
+  { id: '1', user: 'Олексій К.', avatar: '💪', time: '2 год тому', workout: 'Push Day — Груди + Трицепс', exercises: 5, volume: 8450, duration: 62, pr: 'Жим лежачи 120кг 🏆', likes: 12, comments: 3 },
+  { id: '2', user: 'Марія В.', avatar: '🔥', time: '4 год тому', workout: 'Legs Day', exercises: 6, volume: 12300, duration: 75, pr: null, likes: 8, comments: 1 },
+  { id: '3', user: 'Дмитро П.', avatar: '⚡', time: '6 год тому', workout: '5×5 Сила — Тренування A', exercises: 3, volume: 15600, duration: 55, pr: 'Присідання 140кг 🏆', likes: 24, comments: 7 },
+  { id: '4', user: 'Вікторія С.', avatar: '🌟', time: 'вчора', workout: 'Full Body', exercises: 8, volume: 6200, duration: 48, pr: null, likes: 5, comments: 2 },
+];
 
-  const friends = [
-    {
-      id: 1,
-      name: 'Олена Коваль',
-      avatar: 'ОК',
-      workouts: 156,
-      achievements: 23,
-      streak: 12,
-      level: t('gamification.levels.expert'),
-      color: 'from-pink-500 to-rose-600',
-    },
-    {
-      id: 2,
-      name: 'Максим Шевченко',
-      avatar: 'МШ',
-      workouts: 98,
-      achievements: 15,
-      streak: 8,
-      level: t('gamification.levels.advanced'),
-      color: 'from-blue-500 to-cyan-600',
-    },
-    {
-      id: 3,
-      name: 'Ірина Бондаренко',
-      avatar: 'ІБ',
-      workouts: 234,
-      achievements: 34,
-      streak: 24,
-      level: t('gamification.levels.master'),
-      color: 'from-purple-500 to-indigo-600',
-    },
-  ];
+export default function SocialScreen({ onNavigate }: Props) {
+  const { token } = useAuth();
+  const [myWorkouts, setMyWorkouts] = useState<any[]>([]);
+  const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<'feed' | 'my'>('feed');
+  const [sharing, setSharing] = useState<string | null>(null);
 
-  const achievements = [
-    {
-      id: 1,
-      user: 'Андрій Петренко',
-      avatar: 'АП',
-      achievement: t('gamification.achievementsList.workouts100'),
-      description: t('gamification.achievementsList.workouts100Desc'),
-      time: '2 години тому',
-      likes: 24,
-      comments: 5,
-      color: 'from-orange-500 to-pink-600',
-    },
-    {
-      id: 2,
-      user: 'Олена Коваль',
-      avatar: 'ОК',
-      achievement: t('gamification.achievementsList.newRecord'),
-      description: 'Жим лежачи: 80 кг!',
-      time: '5 годин тому',
-      likes: 18,
-      comments: 3,
-      color: 'from-pink-500 to-rose-600',
-    },
-    {
-      id: 3,
-      user: 'Максим Шевченко',
-      avatar: 'МШ',
-      achievement: t('gamification.achievementsList.weekStreak'),
-      description: t('gamification.achievementsList.weekStreakDesc'),
-      time: '1 день тому',
-      likes: 32,
-      comments: 8,
-      color: 'from-blue-500 to-cyan-600',
-    },
-  ];
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/api/workouts`, { headers: { 'x-auth-token': token } })
+      .then(r => r.json()).then(d => setMyWorkouts(Array.isArray(d) ? d.slice(0, 10) : [])).catch(() => {});
+  }, [token]);
 
-  const leaderboard = [
-    { rank: 1, name: 'Ірина Бондаренко', avatar: 'ІБ', points: 2450, color: 'from-purple-500 to-indigo-600' },
-    { rank: 2, name: 'Андрій Петренко', avatar: 'АП', points: 2180, color: 'from-orange-500 to-pink-600' },
-    { rank: 3, name: 'Олена Коваль', avatar: 'ОК', points: 1890, color: 'from-pink-500 to-rose-600' },
-    { rank: 4, name: 'Максим Шевченко', avatar: 'МШ', points: 1650, color: 'from-blue-500 to-cyan-600' },
-    { rank: 5, name: 'Петро Мельник', avatar: 'ПМ', points: 1420, color: 'from-green-500 to-teal-600' },
-  ];
+  const shareWorkout = async (workout: any) => {
+    setSharing(workout._id || workout.id);
+    const vol = (workout.exercises || []).reduce((a: number, ex: any) =>
+      a + (ex.sets || []).reduce((b: number, s: any) => b + ((s.weight || 0) * (s.reps || 0)), 0), 0);
+    const text = `💪 Щойно завершив тренування в FitProgress!\n\n🏋️ ${workout.name || workout.workout}\n📊 ${(workout.exercises || []).length || workout.exercises} вправ\n⚡ Об'єм: ${(vol || workout.volume || 0).toLocaleString()} кг\n⏱ ${workout.duration || 60} хв\n\n#FitProgress #fitness #workout`;
+    try {
+      if (navigator.share) await navigator.share({ title: 'Моє тренування', text });
+      else { await navigator.clipboard.writeText(text); alert('Скопійовано в буфер!'); }
+    } catch {}
+    setSharing(null);
+  };
+
+  const toggleLike = (id: string) => setLiked(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
-    <div className="h-full bg-slate-950 overflow-y-auto pb-24 relative overflow-x-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-pink-500/10 to-transparent pointer-events-none" />
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] aspect-square bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
-
-      {/* Header */}
-      <div className="relative z-10 px-6 pt-[calc(3rem+env(safe-area-inset-top))] pb-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => onNavigate('dashboard')}
-              className="p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all active:scale-95"
-            >
-              <ChevronLeft className="w-6 h-6 text-white" />
-            </button>
-            <div>
-              <h1 className="text-white text-2xl font-black tracking-tight">{t('social.title')}</h1>
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{t('social.subtitle')}</p>
-            </div>
+    <div className="h-full apple-bg overflow-y-auto pb-28">
+      <div className="px-5 pt-[calc(3rem+env(safe-area-inset-top))] pb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-3xl font-bold apple-text tracking-tight">Спільнота</h1>
+            <p className="text-sm apple-text-2 mt-0.5">Тренування друзів</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="p-3 bg-white/5 border border-white/10 rounded-2xl text-white/40 hover:text-white transition-colors">
-              <Search className="w-5 h-5" />
-            </button>
-            <button className="p-3 bg-white/5 border border-white/10 rounded-2xl text-white/40 hover:text-white transition-colors relative">
-              <Bell className="w-5 h-5" />
-              <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-pink-500 rounded-full border-2 border-slate-950" />
-            </button>
-          </div>
+          <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-medium" style={{ background: 'var(--accent-stand)' }}>
+            <UserPlus className="w-4 h-4" /> Запросити
+          </button>
         </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 bg-white/5 p-1.5 rounded-[1.8rem] border border-white/5 backdrop-blur-md mb-8">
-          {[
-            { id: 'friends', icon: Users, label: t('social.tabs.friends') },
-            { id: 'feed', icon: Share2, label: t('social.tabs.feed') },
-            { id: 'leaderboard', icon: Trophy, label: t('social.tabs.leaderboard') }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl transition-all font-black text-[10px] uppercase tracking-widest ${
-                activeTab === tab.id
-                  ? 'bg-pink-500 text-white shadow-lg shadow-pink-500/20'
-                  : 'text-white/30 hover:text-white/60 hover:bg-white/5'
-              }`}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">{tab.label}</span>
+        <div className="flex gap-1.5 p-1 apple-card rounded-xl mb-2" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          {[{id:'feed',label:'Стрічка'},{id:'my',label:'Мої'}].map(t => (
+            <button key={t.id} onClick={() => setTab(t.id as any)}
+              className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
+              style={{ background: tab === t.id ? 'var(--accent-move)' : 'transparent', color: tab === t.id ? '#fff' : 'var(--text-secondary)' }}>
+              {t.label}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Content Area */}
-        <div className="space-y-6">
-          {/* Friends Tab */}
-          {activeTab === 'friends' && (
-            <div className="animate-fade-in">
-              <button className="w-full bg-gradient-to-r from-pink-500 to-purple-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-pink-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3 mb-8 group">
-                <UserPlus className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                {t('social.addFriend')}
-              </button>
-
-              <div className="space-y-4">
-                {friends.map((friend, idx) => (
-                  <div 
-                    key={friend.id} 
-                    className="bg-white/5 border border-white/5 rounded-[2.5rem] p-6 backdrop-blur-md group hover:bg-white/[0.08] transition-all animate-fade-in-up"
-                    style={{ animationDelay: `${idx * 0.1}s` }}
-                  >
-                    <div className="flex items-center gap-5 mb-6">
-                      <div className={`w-16 h-16 bg-gradient-to-br ${friend.color} rounded-[1.5rem] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
-                        {friend.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-white font-black text-lg tracking-tight mb-1">{friend.name}</h3>
-                        <p className="text-[10px] font-black text-pink-400 uppercase tracking-widest">{friend.level}</p>
-                      </div>
-                      <button className="px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-white/60 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95">
-                        {t('social.compare')}
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { label: t('social.stats.workouts'), value: friend.workouts },
-                        { label: t('social.stats.achievements'), value: friend.achievements },
-                        { label: t('social.stats.streak'), value: friend.streak }
-                      ].map((stat, sIdx) => (
-                        <div key={sIdx} className="bg-white/5 rounded-2xl p-4 text-center border border-white/5">
-                          <p className="text-lg font-black text-white mb-0.5">{stat.value}</p>
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest leading-none mt-1">{stat.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+      <div className="px-5 space-y-4">
+        {tab === 'feed' ? <>
+          <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: 'var(--accent-stand)12', border: '1px solid var(--accent-stand)25' }}>
+            <Users className="w-8 h-8 flex-shrink-0" style={{ color: 'var(--accent-stand)' }} />
+            <div>
+              <p className="text-sm font-semibold apple-text">FitProgress Спільнота</p>
+              <p className="text-xs apple-text-2 mt-0.5">1 247 атлетів тренуються разом</p>
             </div>
-          )}
-
-          {/* Feed Tab */}
-          {activeTab === 'feed' && (
-            <div className="space-y-6 animate-fade-in">
-              {achievements.map((post, idx) => (
-                <div 
-                  key={post.id} 
-                  className="bg-white/5 border border-white/5 rounded-[2.5rem] p-6 backdrop-blur-md animate-fade-in-up"
-                  style={{ animationDelay: `${idx * 0.1}s` }}
-                >
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${post.color} rounded-2xl flex items-center justify-center text-white font-black shadow-lg`}>
-                      {post.avatar}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-white font-black tracking-tight">{post.user}</h4>
-                      <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">{post.time}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-pink-500/10 to-purple-600/10 rounded-[2rem] p-6 mb-5 border border-white/5 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-125 transition-transform duration-1000">
-                      <Award className="w-16 h-16 text-white" />
-                    </div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-pink-500/20 rounded-xl flex items-center justify-center">
-                        <Award className="w-5 h-5 text-pink-400" />
-                      </div>
-                      <p className="text-white font-black tracking-tight">{post.achievement}</p>
-                    </div>
-                    <p className="text-sm text-white/60 font-medium leading-relaxed">{post.description}</p>
-                  </div>
-
-                  <div className="flex items-center gap-6 pt-5 border-t border-white/5">
-                    <button
-                      className={`flex items-center gap-2 transition-all active:scale-90 ${
-                        likedPosts.has(post.id) ? 'text-pink-500' : 'text-white/20 hover:text-white/40'
-                      }`}
-                      onClick={() => {
-                        const newLiked = new Set(likedPosts);
-                        if (newLiked.has(post.id)) newLiked.delete(post.id);
-                        else newLiked.add(post.id);
-                        setLikedPosts(newLiked);
-                      }}
-                    >
-                      <Heart className={`w-6 h-6 ${likedPosts.has(post.id) ? 'fill-current' : ''}`} />
-                      <span className="text-xs font-black">{likedPosts.has(post.id) ? post.likes + 1 : post.likes}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-white/20 hover:text-white/40 transition-all active:scale-90">
-                      <MessageCircle className="w-6 h-6" />
-                      <span className="text-xs font-black">{post.comments}</span>
-                    </button>
-                    <button className="flex items-center gap-2 text-white/20 hover:text-white/40 transition-all active:scale-90 ml-auto">
-                      <Share2 className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Leaderboard Tab */}
-          {activeTab === 'leaderboard' && (
-            <div className="space-y-8 animate-fade-in">
-              <div className="bg-gradient-to-br from-pink-500 to-purple-600 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-pink-500/20">
-                <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-                <div className="flex items-center justify-between mb-8 relative z-10">
-                  <div>
-                    <p className="text-white/40 font-black uppercase text-[10px] tracking-[0.2em] mb-2">{t('social.yourRank')}</p>
-                    <p className="text-5xl font-black tracking-tighter">#2</p>
-                  </div>
-                  <div className="w-20 h-20 bg-white/10 backdrop-blur-md rounded-[2rem] flex items-center justify-center border border-white/20">
-                    <Trophy className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 relative z-10">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('social.yourPoints')}</span>
-                    <span className="text-2xl font-black tabular-nums">2,180</span>
-                  </div>
-                </div>
+          </div>
+          {COMMUNITY_POSTS.map(post => (
+            <div key={post.id} className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: '0.5px solid var(--separator)' }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: 'var(--bg-card2)' }}>{post.avatar}</div>
+                <div className="flex-1"><p className="text-sm font-semibold apple-text">{post.user}</p><p className="text-xs apple-text-3">{post.time}</p></div>
+                <button onClick={() => shareWorkout(post)} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--bg-card2)' }}>
+                  <Share2 className="w-4 h-4 apple-text-3" />
+                </button>
               </div>
-
-              <div>
-                <h3 className="text-white font-black text-lg tracking-tight mb-6 px-2">{t('social.topMonth')}</h3>
-                <div className="space-y-3">
-                  {leaderboard.map((user) => (
-                    <div
-                      key={user.rank}
-                      className={`bg-white/5 border rounded-[2rem] p-5 backdrop-blur-md transition-all group hover:bg-white/10 ${
-                        user.rank <= 3 ? 'border-pink-500/30 shadow-lg shadow-pink-500/5' : 'border-white/5'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${
-                          user.rank === 1
-                            ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg'
-                            : user.rank === 2
-                            ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white'
-                            : user.rank === 3
-                            ? 'bg-gradient-to-br from-orange-400 to-orange-500 text-white'
-                            : 'bg-white/5 text-white/40 border border-white/5'
-                        }`}>
-                          {user.rank}
-                        </div>
-                        <div className={`w-12 h-12 bg-gradient-to-br ${user.color} rounded-2xl flex items-center justify-center text-white font-black shadow-lg`}>
-                          {user.avatar}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-white font-black tracking-tight group-hover:text-pink-400 transition-colors">{user.name}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <TrendingUp className="w-3 h-3 text-pink-400" />
-                            <span className="text-[10px] font-black text-white/30 uppercase tracking-widest tabular-nums">
-                              {user.points.toLocaleString()} {t('social.points')}
-                            </span>
-                          </div>
-                        </div>
-                        {user.rank <= 3 && (
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            user.rank === 1 ? 'bg-yellow-400/10 text-yellow-400' :
-                            user.rank === 2 ? 'bg-slate-400/10 text-slate-400' :
-                            'bg-orange-400/10 text-orange-400'
-                          }`}>
-                            <Trophy className="w-4 h-4" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
+              <div className="px-4 py-3">
+                <p className="text-base font-bold apple-text mb-2">{post.workout}</p>
+                {post.pr && <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl" style={{ background: 'var(--accent-energy)15' }}>
+                  <Trophy className="w-4 h-4" style={{ color: 'var(--accent-energy)' }} />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--accent-energy)' }}>{post.pr}</span>
+                </div>}
+                <div className="flex items-center gap-4">
+                  {[{icon:Dumbbell,val:`${post.exercises} вправ`},{icon:TrendingUp,val:`${post.volume.toLocaleString()} кг`},{icon:Flame,val:`${post.duration} хв`}].map((s,i)=>(
+                    <div key={i} className="flex items-center gap-1.5"><s.icon className="w-3.5 h-3.5 apple-text-3" /><span className="text-xs apple-text-2">{s.val}</span></div>
                   ))}
                 </div>
               </div>
+              <div className="flex items-center px-4 py-2.5" style={{ borderTop: '0.5px solid var(--separator)' }}>
+                <button onClick={() => toggleLike(post.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl active:scale-90">
+                  <Heart className="w-4 h-4" style={{ color: liked.has(post.id) ? 'var(--accent-move)' : 'var(--text-tertiary)', fill: liked.has(post.id) ? 'var(--accent-move)' : 'none' }} />
+                  <span className="text-sm apple-text-2">{post.likes + (liked.has(post.id) ? 1 : 0)}</span>
+                </button>
+                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl active:scale-90 ml-1">
+                  <MessageCircle className="w-4 h-4 apple-text-3" />
+                  <span className="text-sm apple-text-2">{post.comments}</span>
+                </button>
+              </div>
             </div>
-          )}
-        </div>
+          ))}
+        </> : <>
+          {myWorkouts.length === 0 ? (
+            <div className="py-14 text-center">
+              <Dumbbell className="w-12 h-12 apple-text-3 mx-auto mb-3" />
+              <p className="text-base font-semibold apple-text mb-1">Немає тренувань</p>
+              <button onClick={() => onNavigate('diary')} className="px-6 py-3 rounded-xl text-white text-sm font-semibold mt-3" style={{ background: 'var(--accent-move)' }}>Розпочати</button>
+            </div>
+          ) : myWorkouts.map((w, i) => {
+            const vol = (w.exercises||[]).reduce((a:number,ex:any)=>a+(ex.sets||[]).reduce((b:number,s:any)=>b+((s.weight||0)*(s.reps||0)),0),0);
+            return (
+              <div key={w._id||i} className="apple-card rounded-2xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                <p className="text-sm font-bold apple-text mb-1">{w.name}</p>
+                <p className="text-xs apple-text-2 mb-3">{(w.exercises||[]).length} вправ · {vol.toLocaleString()} кг · {w.duration||0} хв</p>
+                <button onClick={() => shareWorkout(w)} disabled={sharing===w._id}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-60"
+                  style={{ background: 'var(--accent-stand)15', color: 'var(--accent-stand)' }}>
+                  {sharing===w._id ? '...' : <><Share2 className="w-4 h-4" /> Поділитись</>}
+                </button>
+              </div>
+            );
+          })}
+        </>}
       </div>
     </div>
   );

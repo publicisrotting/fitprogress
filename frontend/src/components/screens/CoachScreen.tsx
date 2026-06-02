@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, Brain, TrendingUp, AlertTriangle, CheckCircle, Zap, BarChart2, RefreshCw, Dumbbell, Calendar } from 'lucide-react';
+import { ChevronLeft, Brain, TrendingUp, AlertTriangle, CheckCircle, Zap, BarChart2, RefreshCw, Dumbbell, Calendar, MessageCircle, Activity, ChevronRight } from 'lucide-react';
 import { useSettings } from '../../context/SettingsContext';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
@@ -256,8 +256,30 @@ export default function CoachScreen({ onNavigate }: CoachScreenProps) {
           </div>
         )}
 
+        {/* Quick links */}
+        <div className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+          {[
+            { icon: MessageCircle, label: 'AI Тренер — Задай питання', sub: 'Chat з персональним тренером', screen: 'ai-trainer', color: 'var(--accent-stand)' },
+            { icon: Activity, label: 'Відновлення м\'язів', sub: 'Коли які групи готові', screen: 'muscle-recovery', color: 'var(--accent-exercise)' },
+          ].map((item, i) => (
+            <button key={item.screen} onClick={() => onNavigate(item.screen)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-70"
+              style={{ borderBottom: i === 0 ? '0.5px solid var(--separator)' : 'none' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: item.color + '20' }}>
+                <item.icon className="w-5 h-5" style={{ color: item.color }} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-semibold apple-text">{item.label}</p>
+                <p className="text-xs apple-text-3 mt-0.5">{item.sub}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 apple-text-3" />
+            </button>
+          ))}
+        </div>
+
         <button onClick={() => onNavigate('diary')}
-          className="w-full py-5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[2rem] shadow-xl shadow-indigo-500/20 active:scale-[0.98] transition-all mb-4">
+          className="w-full py-4 rounded-2xl text-white font-semibold text-sm active:scale-[0.98] transition-all mb-4"
+          style={{ background: 'var(--accent-move)', boxShadow: '0 4px 14px rgba(255,55,95,0.3)' }}>
           Відкрити щоденник
         </button>
       </div>

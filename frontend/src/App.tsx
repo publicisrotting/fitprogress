@@ -15,6 +15,10 @@ import OnboardingScreen from './components/screens/OnboardingScreen';
 import ExerciseProgressScreen from './components/screens/ExerciseProgressScreen';
 import BodyWeightScreen from './components/screens/BodyWeightScreen';
 import WorkoutTemplatesScreen from './components/screens/WorkoutTemplatesScreen';
+import AITrainerScreen from './components/screens/AITrainerScreen';
+import CalendarScreen from './components/screens/CalendarScreen';
+import MuscleRecoveryScreen from './components/screens/MuscleRecoveryScreen';
+import SocialScreen from './components/screens/SocialScreen';
 import BottomNavigation from './components/BottomNavigation';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -84,6 +88,14 @@ export default function App() {
         return <BodyWeightScreen onNavigate={setCurrentScreen} />;
       case 'templates':
         return <WorkoutTemplatesScreen onNavigate={setCurrentScreen} />;
+      case 'ai-trainer':
+        return <AITrainerScreen onNavigate={setCurrentScreen} />;
+      case 'calendar':
+        return <CalendarScreen onNavigate={setCurrentScreen} />;
+      case 'muscle-recovery':
+        return <MuscleRecoveryScreen onNavigate={setCurrentScreen} />;
+      case 'social':
+        return <SocialScreen onNavigate={setCurrentScreen} />;
       default:
         return <DashboardScreen onNavigate={setCurrentScreen} />;
     }
