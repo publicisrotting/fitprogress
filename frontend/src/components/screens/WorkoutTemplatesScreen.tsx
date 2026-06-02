@@ -179,8 +179,11 @@ export default function WorkoutTemplatesScreen({ onNavigate }: Props) {
 
       for (let i = 0; i < template.program.length; i++) {
         const day = template.program[i];
-        const exPayload = day.exercises.map(ex => ({
-          name: ex.nameKey,
+        const exPayload = day.exercises.map(ex => {
+          const translatedName = t(`library.exercisesList.${ex.nameKey}.name`);
+          const displayName = (translatedName && translatedName !== `library.exercisesList.${ex.nameKey}.name`) ? translatedName : ex.nameKey;
+          return {
+          name: displayName,
           nameKey: ex.nameKey,
           notes: '',
           sets: Array.from({ length: ex.sets }).map(() => ({
@@ -188,7 +191,7 @@ export default function WorkoutTemplatesScreen({ onNavigate }: Props) {
             reps: parseInt(String(ex.reps).split('-').pop() || '10') || 10,
             done: false,
           })),
-        }));
+        };});
         const d = new Date(base);
         d.setDate(base.getDate() + i);
         d.setHours(12, 0, 0, 0);

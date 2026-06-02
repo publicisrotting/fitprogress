@@ -104,20 +104,24 @@ router.get('/dashboard', auth, async (req, res) => {
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayStart.getDate() + 1);
       const dateStr = dayStart.toISOString().split('T')[0];
-      const completed = allWorkouts.some(w => {
+      // Only mark past/today as completed — never future dates
+      const isNotFuture = dayStart <= startOfToday;
+      const completed = isNotFuture && allWorkouts.some(w => {
         const d = new Date(w.date);
         return d >= dayStart && d < dayEnd;
       });
       weekStreak.push({ date: dateStr, completed });
     }
 
-    // Update streak counter
+    // Update streak counter — only past + today, skip future
     let streakCount = 0;
     const checkDate = new Date(startOfToday);
     while (true) {
       const dayStart = new Date(checkDate);
       const dayEnd = new Date(checkDate);
       dayEnd.setDate(dayEnd.getDate() + 1);
+      // Only count today or past days
+      if (dayStart > startOfToday) { checkDate.setDate(checkDate.getDate() - 1); continue; }
       const hasWorkout = allWorkouts.some(w => {
         const d = new Date(w.date);
         return d >= dayStart && d < dayEnd;

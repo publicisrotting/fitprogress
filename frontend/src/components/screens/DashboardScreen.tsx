@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen, TrendingUp } from 'lucide-react';
+import { Bell, ChevronRight, Flame, Dumbbell, BarChart3, Zap, BookOpen, TrendingUp, Scale } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { ScrollArea } from '../ui/scroll-area';
 import { useSettings } from '../../context/SettingsContext';
@@ -303,8 +303,8 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       <div className="px-5 mb-4">
         <button onClick={() => onNavigate('body-weight')}
           className="w-full apple-card rounded-2xl px-4 py-3.5 flex items-center gap-3 active:opacity-70" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)18' }}>
-            <span className="text-base">⚖️</span>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)20' }}>
+            <Scale className="w-5 h-5" style={{ color: 'var(--accent-exercise)' }} />
           </div>
           <div className="flex-1 text-left">
             <p className="text-xs apple-text-3">{t('dashboard.weight')}</p>

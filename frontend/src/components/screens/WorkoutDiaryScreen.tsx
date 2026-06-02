@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Check, Trash2, Timer, Save, X, Dumbbell, Clock, TrendingUp, ChevronRight, Star, Pencil, Eye, Search, Zap, Target, BarChart2, Play } from 'lucide-react';
+import { Plus, Trash2, X, Dumbbell, Clock, TrendingUp, ChevronRight, Star, Search, Zap, Target, Play } from 'lucide-react';
+import ActiveWorkoutOverlay from '../ActiveWorkoutOverlay';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
@@ -44,6 +45,7 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
   const [workoutStartTime, setWorkoutStartTime] = useState<number | null>(null);
   const workoutTimerRef = useRef<any>(null);
   const [showStartModal, setShowStartModal] = useState(false);
+  const [overlayMinimized, setOverlayMinimized] = useState(false);
   const [hints, setHints] = useState<Record<number, { last: { weight: number; reps: number; date: string } | null; best: { weight: number; reps: number; date: string } | null }>>({});
   const hintTimers = useRef<Record<number, any>>({});
   const exerciseNameToKey = useRef<Record<string, string> | null>(null);
@@ -683,14 +685,29 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   const isListView = view === 'list' || view === 'today' || view === 'favorites';
+  const isActiveView = view === 'active';
 
   return (
     <div className="h-full apple-bg overflow-hidden flex flex-col">
       {showStartModal && <StartModal />}
+      {isActiveView && (
+        <ActiveWorkoutOverlay
+          workoutName={workoutName}
+          exercises={exercises}
+          elapsed={workoutElapsed}
+          isMinimized={overlayMinimized}
+          onMinimize={() => setOverlayMinimized(true)}
+          onExpand={() => setOverlayMinimized(false)}
+          onSave={() => { handleSave(); setOverlayMinimized(false); }}
+          onCancel={() => { if(window.confirm('Скасувати тренування?')) { setView('list'); setOverlayMinimized(false); } }}
+          onSetDone={(exIdx, sIdx) => toggleSetDone(exIdx, sIdx)}
+          onUpdateSet={(exIdx, sIdx, field, val) => handleUpdateSet(exIdx, sIdx, field, val)}
+          units={units}
+        />
+      )}
 
-      {isListView ? (
-        /* ── LIST VIEW ─────────────────────────────────────────────────── */
-        <div className="flex flex-col h-full">
+      {/* ── LIST VIEW (always shown; workout goes to overlay) ─────────── */}
+      <div className="flex flex-col h-full" style={{ visibility: isActiveView && !overlayMinimized ? 'hidden' : 'visible' }}>
           {/* Header */}
           <div className="px-5 pt-[calc(3rem+env(safe-area-inset-top))] pb-3 flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
@@ -808,166 +825,8 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
               </div>
             )}
           </div>
-        </div>
 
-      ) : (
-        /* ── ACTIVE WORKOUT VIEW ───────────────────────────────────────── */
-        <div className="flex flex-col h-full">
-          {/* Sticky header */}
-          <div className="flex items-center justify-between px-5 py-3 flex-shrink-0 apple-bg/95 backdrop-blur-xl"
-            style={{ borderBottom: '0.5px solid var(--separator)', paddingTop: 'calc(0.75rem + env(safe-area-inset-top))' }}>
-            <button onClick={() => { if(window.confirm('Скасувати тренування?')) setView('list'); }}
-              className="w-9 h-9 apple-card rounded-full flex items-center justify-center active:scale-90 transition-transform">
-              <X className="w-5 h-5 apple-text-2" />
-            </button>
-            <div className="text-center">
-              <p className="text-sm font-semibold apple-text">Тренування</p>
-              {workoutStartTime && (
-                <p className="text-xs font-bold tabular-nums" style={{ color: 'var(--accent-move)' }}>{formatTime(workoutElapsed)}</p>
-              )}
-            </div>
-            <button onClick={handleSave}
-              className="px-5 py-2 rounded-xl text-white text-sm font-semibold active:scale-90 transition-transform"
-              style={{ background: 'var(--accent-exercise)', boxShadow: '0 2px 8px rgba(48,209,88,0.3)' }}>
-              Зберегти
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-5 pb-10 space-y-4 pt-4">
-            {/* Workout name */}
-            <input value={workoutName} onChange={e => setWorkoutName(e.target.value)}
-              className="w-full apple-card rounded-2xl px-4 py-3.5 text-lg font-bold apple-text outline-none"
-              style={{ border: '0.5px solid var(--separator)' }} />
-
-            {/* Rest timer */}
-            {isRestActive && (
-              <div className="apple-card rounded-2xl p-4 flex items-center justify-between animate-fade-in"
-                style={{ border: '1px solid var(--accent-stand)30' }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-stand)20' }}>
-                    <Timer className="w-5 h-5" style={{ color: 'var(--accent-stand)' }} />
-                  </div>
-                  <div>
-                    <p className="text-xs apple-text-3">Відпочинок</p>
-                    <p className="text-xl font-bold apple-text tabular-nums">{formatTime(restTimer)}</p>
-                  </div>
-                </div>
-                <button onClick={() => { setIsRestActive(false); setRestTimer(0); }}
-                  className="px-4 py-2 rounded-xl text-sm font-medium apple-card2" style={{ color: 'var(--accent-stand)' }}>
-                  Пропустити
-                </button>
-              </div>
-            )}
-
-            {/* Exercises */}
-            {exercises.length === 0 && (
-              <div className="py-12 text-center apple-card rounded-2xl">
-                <Dumbbell className="w-10 h-10 apple-text-3 mx-auto mb-3" />
-                <p className="text-sm apple-text-2">Додай першу вправу</p>
-              </div>
-            )}
-
-            {exercises.map((ex, exIdx) => (
-              <div key={exIdx} className="apple-card rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                {/* Exercise header */}
-                <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: '0.5px solid var(--separator)' }}>
-                  <input
-                    value={translateExerciseName(ex.nameKey || resolveExerciseKey(ex.name), ex.name)}
-                    onChange={e => {
-                      const n = [...exercises];
-                      n[exIdx].name = e.target.value;
-                      n[exIdx].nameKey = resolveExerciseKey(e.target.value);
-                      setExercises(n);
-                      scheduleHint(e.target.value, exIdx, n[exIdx].nameKey);
-                    }}
-                    list={`ex-suggestions-${exIdx}`}
-                    className="flex-1 bg-transparent text-base font-semibold apple-text outline-none"
-                    placeholder="Назва вправи"
-                  />
-                  <datalist id={`ex-suggestions-${exIdx}`}>
-                    {(['benchPress','squats','deadlift','pullups','barbellRows','latPulldown','dumbbellPress',
-                      'lateralRaises','bicepCurls','hammerCurls','skullCrushers','lunges','romanianDeadlift',
-                      'inclineDumbbellPress','dumbbellFlyes','crunches','plank','legRaises','burpees',
-                      'dumbbellRows','dumbbellLunges','uprightRows'] as const).map(key => (
-                      <option key={key} value={translateExerciseName(key, key)} />
-                    ))}
-                  </datalist>
-                  <button onClick={() => toggleFavorite(ex.name, ex.nameKey)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: isFavorite(ex.name, ex.nameKey) ? 'var(--accent-energy)20' : 'var(--bg-card2)' }}>
-                    <Star className="w-4 h-4" style={{ color: isFavorite(ex.name, ex.nameKey) ? 'var(--accent-energy)' : 'var(--text-tertiary)' }} strokeWidth={isFavorite(ex.name, ex.nameKey) ? 2.5 : 2} />
-                  </button>
-                  <button onClick={() => handleRemoveExercise(exIdx)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-card2)' }}>
-                    <Trash2 className="w-4 h-4 apple-text-3" />
-                  </button>
-                </div>
-
-                {/* Hints */}
-                {hints[exIdx] && (hints[exIdx].last || hints[exIdx].best) && (
-                  <div className="flex gap-4 px-4 py-2 text-xs apple-text-3" style={{ borderBottom: '0.5px solid var(--separator)', background: 'var(--bg-card2)' }}>
-                    {hints[exIdx].last && <span>Минулий: <span className="font-semibold apple-text-2">{hints[exIdx].last!.weight}×{hints[exIdx].last!.reps}</span></span>}
-                    {hints[exIdx].best && <span>Рекорд: <span className="font-semibold" style={{ color: 'var(--accent-energy)' }}>{hints[exIdx].best!.weight}×{hints[exIdx].best!.reps}</span></span>}
-                  </div>
-                )}
-
-                {/* Column headers */}
-                <div className="flex items-center gap-3 px-4 py-2" style={{ background: 'var(--bg-card2)' }}>
-                  <div className="w-7 text-center text-xs apple-text-3 font-medium">#</div>
-                  <div className="flex-1 text-center text-xs apple-text-3 font-medium">{units==='metric'?'кг':'lb'}</div>
-                  <div className="flex-1 text-center text-xs apple-text-3 font-medium">Повтори</div>
-                  <div className="w-10" />
-                </div>
-
-                {/* Sets */}
-                {ex.sets.map((s, sIdx) => (
-                  <div key={sIdx} className="flex items-center gap-3 px-4 py-2.5" style={{ borderTop: '0.5px solid var(--separator)' }}>
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold apple-text-2" style={{ background: 'var(--bg-card2)' }}>{s.set}</div>
-                    <input type="number" inputMode="decimal" min={0} step="0.5"
-                      value={s.weight === 0 ? '' : s.weight}
-                      onChange={e => handleUpdateSet(exIdx, sIdx, 'weight', e.target.value)}
-                      className="flex-1 apple-card2 rounded-xl h-10 text-center text-base font-semibold apple-text outline-none"
-                      style={{ border: '0.5px solid var(--separator)' }}
-                      placeholder="0" />
-                    <input type="number" inputMode="numeric" min={0} step="1"
-                      value={s.reps === 0 ? '' : s.reps}
-                      onChange={e => handleUpdateSet(exIdx, sIdx, 'reps', e.target.value)}
-                      className="flex-1 apple-card2 rounded-xl h-10 text-center text-base font-semibold apple-text outline-none"
-                      style={{ border: s.done ? '1px solid var(--accent-exercise)' : '0.5px solid var(--separator)', background: s.done ? 'var(--accent-exercise)15' : undefined }}
-                      placeholder="0" />
-                    <button onClick={() => toggleSetDone(exIdx, sIdx)}
-                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                      style={{ background: s.done ? 'var(--accent-exercise)' : 'var(--bg-card2)', boxShadow: s.done ? '0 2px 8px rgba(48,209,88,0.3)' : 'none' }}>
-                      <Check className="w-5 h-5" style={{ color: s.done ? '#fff' : 'var(--text-tertiary)' }} strokeWidth={s.done ? 3 : 2} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add set */}
-                <button onClick={() => handleAddSet(exIdx)}
-                  className="w-full py-3 text-sm font-medium transition-colors active:opacity-70"
-                  style={{ color: 'var(--accent-stand)', borderTop: '0.5px solid var(--separator)' }}>
-                  + Додати підхід
-                </button>
-              </div>
-            ))}
-
-            {/* Add exercise */}
-            <button onClick={handleAddExercise}
-              className="w-full py-4 rounded-2xl text-sm font-semibold border-2 border-dashed active:scale-[0.98] transition-transform"
-              style={{ color: 'var(--accent-stand)', borderColor: 'var(--accent-stand)40' }}>
-              + Додати вправу
-            </button>
-
-            {/* Total volume */}
-            <div className="apple-card rounded-2xl p-5 text-center" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <p className="text-xs apple-text-3 mb-1">Загальний об'єм</p>
-              <p className="text-4xl font-bold tabular-nums" style={{ color: 'var(--accent-move)' }}>{calculateTotalVolume().toLocaleString()}</p>
-              <p className="text-xs apple-text-3 mt-1">{units==='metric'?'кг':'lb'}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
