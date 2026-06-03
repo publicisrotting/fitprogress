@@ -51,6 +51,7 @@ const userSchema = new mongoose.Schema({
   emailVerified: { type: Boolean, default: false },
   verifyCode: String,
   verifyCodeExpires: Date,
+  verifyAttempts: { type: Number, default: 0 },
   isPremium: {
     type: Boolean,
     default: false

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, Eye, EyeOff, ChevronLeft, Dumbbell } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
@@ -21,6 +21,20 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [wasRegister, setWasRegister] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const autoSubmitted = useRef(false);
+
+  // Resend cooldown ticker
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown(c => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  // Start a 60s cooldown when entering the verify view
+  useEffect(() => {
+    if (verifyEmail) { setCooldown(60); autoSubmitted.current = false; }
+  }, [verifyEmail]);
 
   const inputCls = [
     'w-full px-4 py-3.5 rounded-xl text-sm font-medium outline-none transition-all',
@@ -77,17 +91,31 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   };
 
   const resendCode = async () => {
+    if (cooldown > 0) return;
     setLoading(true); setError(''); setSuccess('');
     try {
       const data = await apiJson<any>('/api/auth/resend-code', { method: 'POST', body: { email: verifyEmail } });
       setDevCode(data.devCode || null);
       setSuccess('Новий код надіслано');
+      setCode('');
+      autoSubmitted.current = false;
+      setCooldown(60);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // Auto-submit once 6 digits are entered
+  useEffect(() => {
+    if (verifyEmail && code.length === 6 && !loading && !autoSubmitted.current) {
+      autoSubmitted.current = true;
+      verifyCode();
+    }
+    if (code.length < 6) autoSubmitted.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, verifyEmail]);
 
   // ── Email verification (2FA) view ─────────────────────────────────────────
   if (verifyEmail) {
@@ -130,9 +158,10 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
             {loading ? '...' : 'Підтвердити'}
           </button>
 
-          <button onClick={resendCode} disabled={loading}
-            className="w-full text-center text-sm font-medium mt-4" style={{ color: 'var(--c-primary)' }}>
-            Надіслати код повторно
+          <button onClick={resendCode} disabled={loading || cooldown > 0}
+            className="w-full text-center text-sm font-medium mt-4 disabled:opacity-50"
+            style={{ color: 'var(--c-primary)' }}>
+            {cooldown > 0 ? `Надіслати повторно через ${cooldown}с` : 'Надіслати код повторно'}
           </button>
         </div>
       </div>

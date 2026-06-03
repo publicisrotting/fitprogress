@@ -123,6 +123,7 @@ router.post('/login', async (req, res) => {
       const code = generateCode();
       user.verifyCode = code;
       user.verifyCodeExpires = Date.now() + 10 * 60 * 1000;
+      user.verifyAttempts = 0;
       await user.save();
       const sent = await sendVerificationCode(user.email, code);
       return res.json({
@@ -152,13 +153,25 @@ router.post('/verify-email', async (req, res) => {
     if (!user.verifyCode || !user.verifyCodeExpires || user.verifyCodeExpires < Date.now()) {
       return res.status(400).json({ message: 'Код прострочений. Надішліть новий.' });
     }
+    // Brute-force guard — max 5 attempts per code
+    if ((user.verifyAttempts || 0) >= 5) {
+      user.verifyCode = undefined;
+      user.verifyCodeExpires = undefined;
+      user.verifyAttempts = 0;
+      await user.save();
+      return res.status(429).json({ message: 'Забагато спроб. Надішліть новий код.' });
+    }
     if (String(code).trim() !== user.verifyCode) {
-      return res.status(400).json({ message: 'Невірний код' });
+      user.verifyAttempts = (user.verifyAttempts || 0) + 1;
+      await user.save();
+      const left = Math.max(0, 5 - user.verifyAttempts);
+      return res.status(400).json({ message: `Невірний код. Залишилось спроб: ${left}` });
     }
 
     user.emailVerified = true;
     user.verifyCode = undefined;
     user.verifyCodeExpires = undefined;
+    user.verifyAttempts = 0;
     await user.save();
 
     res.json({ token: signToken(user._id), userId: user._id });
@@ -179,6 +192,7 @@ router.post('/resend-code', async (req, res) => {
     const code = generateCode();
     user.verifyCode = code;
     user.verifyCodeExpires = Date.now() + 10 * 60 * 1000;
+      user.verifyAttempts = 0;
     await user.save();
     const sent = await sendVerificationCode(user.email, code);
     res.json({ ok: true, devCode: sent.delivered ? undefined : sent.devCode });
