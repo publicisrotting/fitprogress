@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, X, Dumbbell, Clock, TrendingUp, ChevronRight, Star, Search, Zap, Target, Play } from 'lucide-react';
 import ActiveWorkoutOverlay from '../ActiveWorkoutOverlay';
+import WorkoutCompleteOverlay, { WorkoutSummary } from '../WorkoutCompleteOverlay';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
@@ -46,6 +47,7 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
   const workoutTimerRef = useRef<any>(null);
   const [showStartModal, setShowStartModal] = useState(false);
   const [overlayMinimized, setOverlayMinimized] = useState(false);
+  const [completedSummary, setCompletedSummary] = useState<WorkoutSummary | null>(null);
   const [hints, setHints] = useState<Record<number, { last: { weight: number; reps: number; date: string } | null; best: { weight: number; reps: number; date: string } | null }>>({});
   const hintTimers = useRef<Record<number, any>>({});
   const exerciseNameToKey = useRef<Record<string, string> | null>(null);
@@ -539,9 +541,46 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
       });
       
       if (res.ok) {
-        toast.success(t('common.success') || 'Saved!');
-        setView('list');
+        // ── Build celebration summary ──────────────────────────────
+        // Historical best weight per exercise (excluding the one being edited)
+        const historicalBest: Record<string, number> = {};
+        workouts.forEach(w => {
+          if (editingWorkoutId && w._id === editingWorkoutId) return;
+          (w.exercises || []).forEach((ex: any) => {
+            const key = ex.nameKey || ex.name;
+            (ex.sets || []).forEach((s: any) => {
+              const wt = Number(s.weight) || 0;
+              if (wt > (historicalBest[key] || 0)) historicalBest[key] = wt;
+            });
+          });
+        });
+
+        const prs: { name: string; weight: number }[] = [];
+        let setsDone = 0;
+        let volume = 0;
+        cleanedExercises.forEach(ex => {
+          const key = ex.nameKey || ex.name;
+          let exMax = 0;
+          ex.sets.forEach(s => {
+            setsDone += 1;
+            volume += (Number(s.weight) || 0) * (Number(s.reps) || 0);
+            if ((Number(s.weight) || 0) > exMax) exMax = Number(s.weight) || 0;
+          });
+          if (exMax > 0 && exMax > (historicalBest[key] || 0)) {
+            prs.push({ name: ex.name || key, weight: exMax });
+          }
+        });
+
         setEditingWorkoutId(null);
+        setView('list');
+        setOverlayMinimized(false);
+        setCompletedSummary({
+          durationMin: Math.max(1, Math.round(workoutElapsed / 60)),
+          volume,
+          setsDone,
+          exercises: cleanedExercises.length,
+          prs,
+        });
       } else {
         toast.error(t('common.error') || 'Save failed');
       }
@@ -690,7 +729,14 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
   return (
     <div className="h-full apple-bg overflow-hidden flex flex-col">
       {showStartModal && <StartModal />}
-      {isActiveView && (
+      {completedSummary && (
+        <WorkoutCompleteOverlay
+          summary={completedSummary}
+          units={units}
+          onClose={() => { setCompletedSummary(null); setView('list'); fetchWorkouts(); }}
+        />
+      )}
+      {isActiveView && !completedSummary && (
         <ActiveWorkoutOverlay
           workoutName={workoutName}
           exercises={exercises}

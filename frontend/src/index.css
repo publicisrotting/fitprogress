@@ -121,13 +121,18 @@
   --text-tertiary:  rgba(40,32,56,0.34);
   /* Separator */
   --separator:    rgba(40,32,56,0.12);
-  /* Brand accent palette — violet-forward, energetic */
-  --accent-move:    #6D4AFF;   /* electric violet — primary brand */
-  --accent-exercise:#16C79A;   /* teal-green — success / done */
-  --accent-stand:   #2E8BFF;   /* azure — info */
-  --accent-energy:  #FF8A3D;   /* warm amber — streaks / energy */
+  /* ── 3-COLOR BRAND SYSTEM ──────────────────────────── */
+  /* Primary (violet), Accent (coral), Success (green). Nothing else. */
+  --c-primary:  #6D4AFF;   /* violet — brand / primary actions */
+  --c-accent:   #FF6B4A;   /* coral  — energy / highlights / streaks */
+  --c-success:  #22C55E;   /* green  — done / positive */
+  /* All legacy accent vars map onto the 3 brand colors */
+  --accent-move:    var(--c-primary);
+  --accent-stand:   var(--c-primary);
+  --accent-exercise:var(--c-success);
+  --accent-energy:  var(--c-accent);
   --brand-grad-from:#6D4AFF;
-  --brand-grad-to:  #A24BFF;
+  --brand-grad-to:  #9A6BFF;
 }
 
 .dark {
@@ -263,3 +268,8 @@ body, html, #root {
 /* Hide scrollbar */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}

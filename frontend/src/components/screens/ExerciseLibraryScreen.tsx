@@ -19,8 +19,8 @@ interface Exercise {
 }
 
 const MUSCLE_COLORS: Record<string, string> = {
-  chest: '#6D4AFF', back: '#2E8BFF', legs: '#16C79A',
-  shoulders: '#FF8A3D', arms: '#FF4D6D', abs: '#A24BFF', all: '#6D4AFF',
+  chest: '#6D4AFF', back: '#FF6B4A', legs: '#22C55E',
+  shoulders: '#6D4AFF', arms: '#FF6B4A', abs: '#22C55E', all: '#6D4AFF',
 };
 
 export default function ExerciseLibraryScreen({ onNavigate }: ExerciseLibraryScreenProps) {

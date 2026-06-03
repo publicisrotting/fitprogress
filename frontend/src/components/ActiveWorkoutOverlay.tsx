@@ -23,13 +23,11 @@ function fmt(s: number) {
 }
 
 // Gradient accent per exercise index
+// 3-color brand system, cycled per exercise
 const ACCENTS = [
-  { from: '#6D4AFF', to: '#A24BFF' },  // violet — brand
-  { from: '#2E8BFF', to: '#5BB0FF' },  // azure
-  { from: '#16C79A', to: '#22D3A6' },  // teal
-  { from: '#FF8A3D', to: '#FFB23E' },  // amber
-  { from: '#FF4D6D', to: '#FF6B9D' },  // magenta
-  { from: '#A24BFF', to: '#C77DFF' },  // purple
+  { from: '#6D4AFF', to: '#9A6BFF' },  // violet (primary)
+  { from: '#FF6B4A', to: '#FF8A6B' },  // coral (accent)
+  { from: '#22C55E', to: '#4ADE80' },  // green (success)
 ];
 
 export default function ActiveWorkoutOverlay({

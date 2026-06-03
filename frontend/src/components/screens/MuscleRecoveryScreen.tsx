@@ -7,11 +7,11 @@ interface Props { onNavigate: (s: string) => void; }
 
 const MUSCLE_GROUPS = [
   { key: 'chest',     label: 'Груди',   color: '#6D4AFF', nameKeys: ['benchPress','inclineDumbbellPress','dumbbellFlyes'], recoveryHours: 48 },
-  { key: 'back',      label: 'Спина',   color: '#2E8BFF', nameKeys: ['pullups','barbellRows','latPulldown','dumbbellRows'], recoveryHours: 48 },
-  { key: 'legs',      label: 'Ноги',    color: '#16C79A', nameKeys: ['squats','romanianDeadlift','lunges','dumbbellLunges'], recoveryHours: 72 },
-  { key: 'shoulders', label: 'Плечі',   color: '#FF8A3D', nameKeys: ['dumbbellPress','lateralRaises','uprightRows'], recoveryHours: 48 },
-  { key: 'arms',      label: 'Руки',    color: '#FF4D6D', nameKeys: ['bicepCurls','hammerCurls','skullCrushers'], recoveryHours: 36 },
-  { key: 'abs',       label: 'Прес',    color: '#A24BFF', nameKeys: ['plank','crunches','legRaises'], recoveryHours: 24 },
+  { key: 'back',      label: 'Спина',   color: '#FF6B4A', nameKeys: ['pullups','barbellRows','latPulldown','dumbbellRows'], recoveryHours: 48 },
+  { key: 'legs',      label: 'Ноги',    color: '#22C55E', nameKeys: ['squats','romanianDeadlift','lunges','dumbbellLunges'], recoveryHours: 72 },
+  { key: 'shoulders', label: 'Плечі',   color: '#6D4AFF', nameKeys: ['dumbbellPress','lateralRaises','uprightRows'], recoveryHours: 48 },
+  { key: 'arms',      label: 'Руки',    color: '#FF6B4A', nameKeys: ['bicepCurls','hammerCurls','skullCrushers'], recoveryHours: 36 },
+  { key: 'abs',       label: 'Прес',    color: '#22C55E', nameKeys: ['plank','crunches','legRaises'], recoveryHours: 24 },
 ];
 
 export default function MuscleRecoveryScreen({ onNavigate }: Props) {

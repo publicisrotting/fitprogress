@@ -38,7 +38,7 @@ export default function StatisticsScreen({ onNavigate, showHeader = true }: { on
   const totalWorkouts = filtered.length;
 
   const muscleColors: Record<string, string> = {
-    Chest: '#FF375F', Back: '#0A84FF', Legs: '#30D158', Shoulders: '#FF9F0A', Arms: '#BF5AF2', Core: '#64D2FF'
+    Chest: '#6D4AFF', Back: '#FF6B4A', Legs: '#22C55E', Shoulders: '#6D4AFF', Arms: '#FF6B4A', Core: '#22C55E'
   };
   const muscleData = (stats.muscleGroupData || []).map((g: any) => ({
     ...g, color: muscleColors[g.name] || '#888'
