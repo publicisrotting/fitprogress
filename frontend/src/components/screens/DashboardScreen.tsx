@@ -74,20 +74,18 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
   const name = data?.user?.name || '';
   const picture = data?.user?.picture || '';
 
-  // Week streak
-  const weekStreakSource: { date: string; completed: boolean }[] = Array.isArray(data?.stats?.weekStreak) ? data.stats.weekStreak : [];
+  // Week streak — render backend entries directly (Mon→Sun, local dates).
+  // Label comes from each entry's own date so it always matches the highlighted day.
+  const weekStreakSource: { date: string; completed: boolean; isToday?: boolean }[] =
+    Array.isArray(data?.stats?.weekStreak) ? data.stats.weekStreak : [];
   const weekDaysRaw = t('dashboard.weekDays');
-  const weekDayLabels: string[] = Array.isArray(weekDaysRaw) ? weekDaysRaw : ['M','T','W','T','F','S','S'];
-  const today = new Date();
-  const currentDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
-  const weekStreak = weekDayLabels.map((dayLabel: string, idx: number) => {
-    const d = new Date(today);
-    const diff = (idx + 1) - (today.getDay() === 0 ? 7 : today.getDay());
-    d.setDate(today.getDate() + diff);
-    const dateStr = d.toISOString().split('T')[0];
-    const entry = weekStreakSource.find((s: any) => s.date === dateStr);
-    return { day: dayLabel, completed: entry ? Boolean(entry.completed) : false, isToday: idx === currentDayIndex };
-  });
+  const weekDayLabels: string[] = Array.isArray(weekDaysRaw) ? weekDaysRaw : ['ПН','ВТ','СР','ЧТ','ПТ','СБ','НД'];
+  const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+  const weekStreak = weekStreakSource.map((entry, idx) => ({
+    day: weekDayLabels[idx] || '',
+    completed: Boolean(entry.completed),
+    isToday: entry.isToday ?? (entry.date === todayStr),
+  }));
 
   // Activity ring progress (move ring = workouts this month / 20 target)
   const moveProgress = Math.min(workoutsMonth / 20, 1);

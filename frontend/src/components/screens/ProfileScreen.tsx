@@ -212,20 +212,23 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
       <div className="relative z-10 px-6 pt-[calc(3rem+env(safe-area-inset-top))] pb-8">
         <div className="flex flex-col items-center text-center mb-8">
           <div className="relative group mb-6">
-            <div className="p-1 bg-gradient-to-tr from-orange-500 via-pink-500 to-purple-600 rounded-[3rem] shadow-2xl shadow-orange-500/20 active:scale-95 transition-transform duration-500">
-              <div 
-                className="w-36 h-36 rounded-[2.8rem] bg-slate-900 flex items-center justify-center overflow-hidden cursor-pointer border-4 border-slate-950 relative"
+            <div className="p-1 rounded-[3rem] active:scale-95 transition-transform duration-500"
+              style={{ background: 'linear-gradient(135deg, var(--c-primary), #9A6BFF)', boxShadow: '0 12px 32px rgba(109,74,255,0.3)' }}>
+              <div
+                className="w-36 h-36 rounded-[2.8rem] flex items-center justify-center overflow-hidden cursor-pointer relative"
+                style={{ background: 'var(--bg-card)', border: '4px solid var(--bg-card)' }}
                 onClick={() => document.getElementById('avatar-input')?.click()}
               >
                 {userData?.picture ? (
                   <img src={userData.picture} alt="Profile" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 ) : (
-                  <div className="w-full h-full bg-slate-800 flex items-center justify-center text-white text-5xl font-black">
+                  <div className="w-full h-full flex items-center justify-center text-white text-5xl font-black"
+                    style={{ background: 'linear-gradient(135deg, var(--c-primary), #9A6BFF)' }}>
                     {userData?.name ? userData.name.substring(0, 1).toUpperCase() : 'U'}
                   </div>
                 )}
-                <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm">
-                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm" style={{ background: 'rgba(12,10,20,0.5)' }}>
+                   <div className="w-12 h-12 bg-white/15 rounded-2xl flex items-center justify-center border border-white/25">
                      <Camera className="w-6 h-6 text-white" />
                    </div>
                 </div>
@@ -239,7 +242,8 @@ export default function ProfileScreen({ onNavigate, onLogout }: ProfileScreenPro
               onChange={handleAvatarUpload}
             />
             {userData?.isPremium && (
-              <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-gradient-to-tr from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center border-4 border-slate-950 shadow-xl animate-bounce-slow">
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl animate-bounce-slow"
+                style={{ background: 'linear-gradient(135deg,#FFB23E,var(--c-accent))', border: '4px solid var(--bg-primary)' }}>
                 <Crown className="w-6 h-6 text-white" />
               </div>
             )}

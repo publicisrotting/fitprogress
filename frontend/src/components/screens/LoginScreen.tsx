@@ -16,6 +16,11 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // Email verification (2FA) state
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [devCode, setDevCode] = useState<string | null>(null);
+  const [wasRegister, setWasRegister] = useState(false);
 
   const inputCls = [
     'w-full px-4 py-3.5 rounded-xl text-sm font-medium outline-none transition-all',
@@ -37,8 +42,14 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const body: any = { email, password };
       if (!isLogin) body.name = name;
-      const data = await apiJson<{ token: string; userId: string }>(endpoint, { method: 'POST', body });
-      // New account → always run onboarding (collect age/sex/weight/height/goal)
+      const data = await apiJson<any>(endpoint, { method: 'POST', body });
+      // Email not confirmed yet → switch to code-entry view
+      if (data.requiresVerification) {
+        setWasRegister(!isLogin);
+        setVerifyEmail(data.email || email);
+        setDevCode(data.devCode || null);
+        return;
+      }
       if (!isLogin) localStorage.removeItem('onboardingComplete');
       login(data.token, data.userId);
       onLogin();
@@ -49,10 +60,89 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
     }
   };
 
+  const verifyCode = async () => {
+    setLoading(true); setError('');
+    try {
+      const data = await apiJson<{ token: string; userId: string }>('/api/auth/verify-email', {
+        method: 'POST', body: { email: verifyEmail, code }
+      });
+      if (wasRegister) localStorage.removeItem('onboardingComplete');
+      login(data.token, data.userId);
+      onLogin();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendCode = async () => {
+    setLoading(true); setError(''); setSuccess('');
+    try {
+      const data = await apiJson<any>('/api/auth/resend-code', { method: 'POST', body: { email: verifyEmail } });
+      setDevCode(data.devCode || null);
+      setSuccess('Новий код надіслано');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Email verification (2FA) view ─────────────────────────────────────────
+  if (verifyEmail) {
+    return (
+      <div className="h-full apple-bg flex flex-col items-center justify-center px-5 relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-72 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(109,74,255,0.14) 0%, transparent 100%)' }} />
+        <div className="w-full max-w-sm relative z-10">
+          <button onClick={() => { setVerifyEmail(null); setCode(''); setError(''); setSuccess(''); }}
+            className="flex items-center gap-1.5 mb-6 text-sm font-medium" style={{ color: 'var(--c-primary)' }}>
+            <ChevronLeft className="w-4 h-4" /> Назад
+          </button>
+          <div className="w-16 h-16 rounded-[20px] flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, var(--c-primary), #9A6BFF)' }}>
+            <Mail className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold apple-text mb-1.5">Підтвердіть email</h1>
+          <p className="text-sm apple-text-2 mb-6">Ми надіслали 6-значний код на<br /><span className="font-semibold apple-text">{verifyEmail}</span></p>
+
+          {devCode && (
+            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ background: 'var(--c-accent)15', border: '1px solid var(--c-accent)30', color: 'var(--text-primary)' }}>
+              Демо-режим (email не налаштований): ваш код <b style={{ letterSpacing: '2px' }}>{devCode}</b>
+            </div>
+          )}
+
+          <input
+            value={code}
+            onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            onKeyDown={e => e.key === 'Enter' && code.length === 6 && verifyCode()}
+            inputMode="numeric"
+            placeholder="••••••"
+            className="w-full text-center text-3xl font-bold tracking-[0.5em] py-4 rounded-2xl outline-none mb-2"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--separator)', color: 'var(--text-primary)' }}
+          />
+
+          {error && <p className="text-sm font-medium text-center mt-2" style={{ color: 'var(--c-accent)' }}>{error}</p>}
+          {success && <p className="text-sm font-medium text-center mt-2" style={{ color: 'var(--c-success)' }}>{success}</p>}
+
+          <button onClick={verifyCode} disabled={loading || code.length !== 6}
+            className="w-full py-4 rounded-xl text-white text-base font-semibold mt-4 active:scale-[0.98] transition-transform disabled:opacity-50"
+            style={{ background: 'var(--c-primary)', boxShadow: '0 4px 14px rgba(109,74,255,0.35)' }}>
+            {loading ? '...' : 'Підтвердити'}
+          </button>
+
+          <button onClick={resendCode} disabled={loading}
+            className="w-full text-center text-sm font-medium mt-4" style={{ color: 'var(--c-primary)' }}>
+            Надіслати код повторно
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full apple-bg flex flex-col overflow-hidden">
       {/* Top gradient */}
-      <div className="absolute inset-x-0 top-0 h-72 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(255,55,95,0.12) 0%, transparent 100%)' }} />
+      <div className="absolute inset-x-0 top-0 h-72 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(109,74,255,0.12) 0%, transparent 100%)' }} />
 
       <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-5 py-10 relative z-10">
         {/* Logo */}

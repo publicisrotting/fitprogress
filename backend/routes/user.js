@@ -96,6 +96,10 @@ router.get('/dashboard', auth, async (req, res) => {
     // Workouts this month
     const workoutsThisMonth = allWorkouts.filter(w => new Date(w.date) >= startOfMonth).length;
 
+    // Local YYYY-MM-DD (no UTC shift) so client buckets match exactly
+    const fmtLocal = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const todayStr = fmtLocal(startOfToday);
+
     // Week streak — one entry per day Mon-Sun
     const weekStreak = [];
     for (let i = 0; i < 7; i++) {
@@ -103,14 +107,14 @@ router.get('/dashboard', auth, async (req, res) => {
       dayStart.setDate(startOfWeek.getDate() + i);
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayStart.getDate() + 1);
-      const dateStr = dayStart.toISOString().split('T')[0];
+      const dateStr = fmtLocal(dayStart);
       // Only mark past/today as completed — never future dates
       const isNotFuture = dayStart <= startOfToday;
       const completed = isNotFuture && allWorkouts.some(w => {
         const d = new Date(w.date);
         return d >= dayStart && d < dayEnd;
       });
-      weekStreak.push({ date: dateStr, completed });
+      weekStreak.push({ date: dateStr, completed, isToday: dateStr === todayStr });
     }
 
     // Update streak counter — only past + today, skip future

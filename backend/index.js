@@ -87,19 +87,29 @@ const connectDB = async () => {
     console.log('🔄 Switching to In-Memory Local Database (Offline Mode)...');
     
     try {
-      // Persistent local MongoDB — survives server restarts so users/workouts
-      // are not lost in dev. Data stored under backend/.mongo-data.
       const fs = require('fs');
       const dbPath = path.join(__dirname, '.mongo-data');
       if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath, { recursive: true });
 
-      const mongod = await MongoMemoryServer.create({
-        instance: { dbPath, storageEngine: 'wiredTiger' },
+      // Clear stale WiredTiger locks left by a previous (killed) instance,
+      // otherwise the new mongod refuses to start.
+      ['mongod.lock', 'WiredTiger.lock'].forEach(f => {
+        try { fs.existsSync(path.join(dbPath, f)) && fs.unlinkSync(path.join(dbPath, f)); } catch {}
       });
-      const uri = mongod.getUri();
 
-      await mongoose.connect(uri);
-      console.log('✅ Connected to Local MongoDB (persistent at backend/.mongo-data)');
+      let mongod;
+      try {
+        // Persistent — data survives restarts
+        mongod = await MongoMemoryServer.create({ instance: { dbPath, storageEngine: 'wiredTiger' } });
+        await mongoose.connect(mongod.getUri());
+        console.log('✅ Connected to Local MongoDB (persistent at backend/.mongo-data)');
+      } catch (persistErr) {
+        // Fallback to ephemeral so the server always boots
+        console.log('⚠️ Persistent DB locked, using ephemeral in-memory DB:', persistErr.message);
+        mongod = await MongoMemoryServer.create();
+        await mongoose.connect(mongod.getUri());
+        console.log('✅ Connected to ephemeral in-memory MongoDB');
+      }
     } catch (innerErr) {
       console.error('❌ Fatal: Could not connect to any database.', innerErr);
       // Don't exit process, just log error so console stays open
