@@ -252,26 +252,23 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         </button>
       </div>
 
-      {/* Quick nav grid */}
+      {/* Quick actions — only things NOT already in the bottom nav */}
       <div className="px-5 mb-4">
-        <div className="grid grid-cols-2 gap-3">
+        <p className="text-xs font-semibold apple-text-3 uppercase tracking-wider mb-2.5 px-1">{t('dashboard.programs') || 'Швидкі дії'}</p>
+        <div className="grid grid-cols-3 gap-3">
           {[
-            { id: 'diary',      icon: Dumbbell, label: t('dashboard.diary'),      sub: t('dashboard.workouts'),  color: 'var(--accent-move)' },
-            { id: 'generator',  icon: Zap,      label: t('dashboard.generator'),  sub: t('dashboard.programs'),  color: 'var(--accent-energy)' },
-            { id: 'statistics', icon: BarChart3, label: t('dashboard.statistics'), sub: t('dashboard.progress'),  color: 'var(--accent-stand)' },
-            { id: 'library',    icon: BookOpen,  label: t('dashboard.library'),    sub: t('dashboard.exercises'), color: 'var(--accent-exercise)' },
+            { id: 'generator', icon: Zap,      label: t('dashboard.generator'), color: 'var(--accent-energy)' },
+            { id: 'templates',  icon: BookOpen, label: 'Шаблони',                color: 'var(--accent-stand)' },
+            { id: 'library',    icon: Dumbbell, label: t('dashboard.library'),   color: 'var(--accent-exercise)' },
           ].map(item => (
             <button key={item.id} onClick={() => onNavigate(item.id)}
-              className="apple-card rounded-2xl p-4 text-left active:scale-95 transition-transform flex items-start gap-3"
-              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+              className="rounded-2xl p-3.5 active:scale-95 transition-transform flex flex-col items-center gap-2"
+              style={{ background: 'var(--bg-card)', boxShadow: '0 2px 10px rgba(40,32,56,0.05)' }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: item.color + '18' }}>
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: item.color + '1A' }}>
                 <item.icon className="w-5 h-5" style={{ color: item.color }} />
               </div>
-              <div>
-                <p className="text-sm font-semibold apple-text">{item.label}</p>
-                <p className="text-xs apple-text-3 mt-0.5">{item.sub}</p>
-              </div>
+              <p className="text-xs font-semibold apple-text text-center leading-tight">{item.label}</p>
             </button>
           ))}
         </div>
@@ -303,18 +300,25 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
         </div>
       )}
 
-      {/* Weight tracker */}
+      {/* Weight tracker — prominent card */}
       <div className="px-5 mb-4">
         <button onClick={() => onNavigate('body-weight')}
-          className="w-full apple-card rounded-2xl px-4 py-3.5 flex items-center gap-3 active:opacity-70" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-exercise)20' }}>
-            <Scale className="w-5 h-5" style={{ color: 'var(--accent-exercise)' }} />
+          className="w-full rounded-3xl p-5 flex items-center gap-4 active:scale-[0.98] transition-transform text-left"
+          style={{ background: 'linear-gradient(135deg, var(--c-success)14, var(--bg-card))', border: '1px solid var(--c-success)25', boxShadow: '0 2px 14px rgba(40,32,56,0.06)' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--c-success)20' }}>
+            <Scale className="w-7 h-7" style={{ color: 'var(--c-success)' }} />
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-xs apple-text-3">{t('dashboard.weight')}</p>
-            <p className="text-sm font-semibold apple-text">{weight > 0 ? `${weight} ${weightUnit}` : 'Натисни щоб відстежувати'}</p>
+          <div className="flex-1">
+            <p className="text-xs apple-text-3 mb-0.5">{t('dashboard.weight')}</p>
+            {weight > 0 ? (
+              <p className="text-2xl font-bold apple-text leading-none">{weight}<span className="text-sm font-medium apple-text-3 ml-1">{weightUnit}</span></p>
+            ) : (
+              <p className="text-sm font-semibold apple-text">Почни відстежувати вагу</p>
+            )}
           </div>
-          <ChevronRight className="w-4 h-4 apple-text-3" />
+          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: 'var(--c-success)' }}>
+            <ChevronRight className="w-5 h-5 text-white" />
+          </div>
         </button>
       </div>
     </div>

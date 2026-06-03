@@ -192,8 +192,10 @@ export default function WorkoutTemplatesScreen({ onNavigate }: Props) {
             done: false,
           })),
         };});
+        // Spread across the week with rest days between sessions
+        const offset = Math.round(i * 7 / template.program.length);
         const d = new Date(base);
-        d.setDate(base.getDate() + i);
+        d.setDate(base.getDate() + offset);
         d.setHours(12, 0, 0, 0);
 
         await fetch(`${API_URL}/api/workouts`, {

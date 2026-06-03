@@ -108,7 +108,9 @@ export default function App() {
         ) : (
           renderScreen()
         )}
-        {isAuthenticated && !showOnboarding && <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />}
+        {isAuthenticated && !showOnboarding && !['ai-trainer'].includes(currentScreen) && (
+          <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+        )}
         <Toaster position="top-center" richColors theme={theme} />
       </div>
     </div>

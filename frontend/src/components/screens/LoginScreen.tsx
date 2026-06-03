@@ -38,6 +38,8 @@ export default function LoginScreen({ onLogin }: { onLogin: () => void }) {
       const body: any = { email, password };
       if (!isLogin) body.name = name;
       const data = await apiJson<{ token: string; userId: string }>(endpoint, { method: 'POST', body });
+      // New account → always run onboarding (collect age/sex/weight/height/goal)
+      if (!isLogin) localStorage.removeItem('onboardingComplete');
       login(data.token, data.userId);
       onLogin();
     } catch (err: any) {

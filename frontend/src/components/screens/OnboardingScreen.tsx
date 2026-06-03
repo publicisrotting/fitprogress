@@ -22,6 +22,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
   const { token } = useAuth();
   const [step, setStep] = useState(0);
   const [age, setAge] = useState('');
+  const [gender, setGender] = useState<'Чоловік' | 'Жінка'>('Чоловік');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [goal, setGoal] = useState('mass');
@@ -36,6 +37,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
         body: JSON.stringify({
           age: Number(age) || undefined,
+          gender,
           weight: Number(weight) || undefined,
           height: Number(height) || undefined,
           goal,
@@ -58,6 +60,18 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
           placeholder="25"
           className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white text-xl font-black outline-none focus:border-orange-500 transition-all"
         />
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">{t('profile.gender') || 'Стать'}</p>
+        <div className="grid grid-cols-2 gap-3">
+          {([['Чоловік', t('profile.male') || 'Чоловік'], ['Жінка', t('profile.female') || 'Жінка']] as const).map(([val, label]) => (
+            <button key={val} onClick={() => setGender(val)}
+              className="py-4 rounded-2xl text-base font-bold transition-all active:scale-95"
+              style={{ background: gender === val ? 'var(--c-primary)' : 'var(--bg-card2)', color: gender === val ? '#fff' : 'var(--text-secondary)' }}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       <div>
         <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">{t('onboarding.weight') || 'Weight (kg)'}</p>

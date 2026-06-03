@@ -57,6 +57,32 @@ export default function PremiumModal({ isOpen, onClose, onSuccess, isPremium = f
       .catch(() => setLastInvoice(null));
   }, [isOpen, token]);
 
+  // Auto-poll payment status while an invoice is pending (no manual button needed)
+  useEffect(() => {
+    if (!isOpen) return;
+    const invoiceId = lastInvoice?.invoiceId;
+    if (!invoiceId || lastInvoice?.status === 'success') return;
+    const poll = setInterval(async () => {
+      try {
+        const resp = await fetch(`${API_URL}/api/billing/status?invoiceId=${encodeURIComponent(invoiceId)}`, {
+          headers: { 'x-auth-token': token || '' }
+        });
+        const data = await resp.json();
+        if (!resp.ok) return;
+        setLastInvoice(prev => prev ? { ...prev, status: data?.status } : prev);
+        if (data?.status === 'success') {
+          clearInterval(poll);
+          toast.success(t('common.success'));
+          localStorage.removeItem('lastSubscriptionInvoiceId');
+          if (onSuccess) onSuccess();
+          onClose();
+        }
+      } catch { /* keep polling */ }
+    }, 4000);
+    return () => clearInterval(poll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, lastInvoice?.invoiceId, lastInvoice?.status, token]);
+
   if (!isOpen) return null;
 
   const handleCheckout = async () => {

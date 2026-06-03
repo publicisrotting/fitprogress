@@ -118,7 +118,9 @@ export default function GeneratorScreen({ onNavigate }: { onNavigate: (s: string
             sets: Array.from({ length: Number(ex.sets) || 3 }).map(() => ({ weight: 0, reps: repsNum, done: false }))
           };
         });
-        const d = new Date(base); d.setDate(base.getDate() + i); d.setHours(12,0,0,0);
+        // Spread workouts evenly across a 7-day week so muscles get rest between sessions
+        const offset = Math.round(i * 7 / generated.length);
+        const d = new Date(base); d.setDate(base.getDate() + offset); d.setHours(12,0,0,0);
         const res = await fetch(`${API_URL}/api/workouts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },

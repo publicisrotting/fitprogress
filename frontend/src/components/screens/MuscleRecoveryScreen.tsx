@@ -40,11 +40,17 @@ export default function MuscleRecoveryScreen({ onNavigate }: Props) {
       .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .forEach(w => {
         if (lastTrainedMs !== null) return;
-        const hasExercise = (w.exercises||[]).some((ex:any) => mg.nameKeys.includes(ex.nameKey||''));
-        if (hasExercise) lastTrainedMs = new Date(w.date).getTime();
+        const ts = new Date(w.date).getTime();
+        // Ignore future-dated (planned) workouts — only count sessions already performed
+        if (ts > now) return;
+        const ex = (w.exercises || []).find((e: any) => mg.nameKeys.includes(e.nameKey || ''));
+        if (!ex) return;
+        // Count as "trained" only if it has a real logged set (weight or reps > 0)
+        const performed = (ex.sets || []).some((s: any) => (s.weight || 0) > 0 || (s.reps || 0) > 0);
+        if (performed) lastTrainedMs = ts;
       });
-    const hoursSince = lastTrainedMs !== null ? (now - lastTrainedMs) / 3600000 : 999;
-    const pct = Math.min(100, (hoursSince / mg.recoveryHours) * 100);
+    const hoursSince = lastTrainedMs !== null ? Math.max(0, (now - lastTrainedMs) / 3600000) : 999;
+    const pct = lastTrainedMs === null ? 100 : Math.min(100, (hoursSince / mg.recoveryHours) * 100);
     const status: StatusKey = pct >= 100 ? 'ready' : pct >= 60 ? 'recovering' : 'fatigued';
     return { ...mg, hoursSince, pct, status };
   });
@@ -73,6 +79,24 @@ export default function MuscleRecoveryScreen({ onNavigate }: Props) {
       </div>
 
       <div className="px-5 space-y-4">
+        {/* Recommendation — top priority */}
+        <div className="rounded-2xl p-4" style={{ background: 'var(--c-primary)10', border: '1px solid var(--c-primary)30' }}>
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--c-primary)1A' }}>
+              <Zap className="w-5 h-5" style={{ color: 'var(--c-primary)' }} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold apple-text mb-1">Рекомендація на сьогодні</p>
+              <p className="text-sm apple-text-2 leading-relaxed">
+                {muscleStatus.filter(m => m.status === 'ready').length === 0
+                  ? 'Дай тілу відпочити — всі м\'язи ще відновлюються. Ідеальний день для прогулянки або йоги.'
+                  : `Готові до тренування: ${muscleStatus.filter(m => m.status === 'ready').map(m => m.label).join(', ')}.`
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Summary */}
         <div className="grid grid-cols-3 gap-3">
           {(['ready','recovering','fatigued'] as const).map(s => {
@@ -119,22 +143,6 @@ export default function MuscleRecoveryScreen({ onNavigate }: Props) {
               </div>
             );
           })}
-        </div>
-
-        {/* Recommendation */}
-        <div className="apple-card rounded-2xl p-4" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-          <div className="flex items-start gap-3">
-            <Zap className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-stand)' }} />
-            <div>
-              <p className="text-sm font-semibold apple-text mb-1">Рекомендація на сьогодні</p>
-              <p className="text-sm apple-text-2 leading-relaxed">
-                {muscleStatus.filter(m => m.status === 'ready').length === 0
-                  ? 'Дай тілу відпочити — всі м\'язи ще відновлюються. Ідеальний день для прогулянки або йоги.'
-                  : `Готові до тренування: ${muscleStatus.filter(m => m.status === 'ready').map(m => m.label).join(', ')}.`
-                }
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
