@@ -94,7 +94,7 @@ const connectDB = async () => {
       if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath, { recursive: true });
 
       const mongod = await MongoMemoryServer.create({
-        instance: { dbPath, storageEngine: 'wiredTiger', port: 27117 },
+        instance: { dbPath, storageEngine: 'wiredTiger' },
       });
       const uri = mongod.getUri();
 
