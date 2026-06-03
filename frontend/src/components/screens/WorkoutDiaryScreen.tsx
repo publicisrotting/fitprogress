@@ -249,6 +249,31 @@ export default function WorkoutDiaryScreen({ onNavigate }: { onNavigate: (s: str
     setWorkoutElapsed(0);
     setHints({});
     setExpandedWorkoutId(null);
+    // Progressive overload — prefill weights from last time for planned (empty) sets
+    prefillFromHistory(mapped);
+  };
+
+  // Auto-fill each weighted exercise's sets with last-time weight/reps when they're empty
+  const prefillFromHistory = async (mapped: WorkoutExercise[]) => {
+    try {
+      const results = await Promise.all(mapped.map(async (ex) => {
+        const hasLogged = ex.sets.some(s => (s.weight || 0) > 0);
+        if (hasLogged) return null; // already has data — don't override
+        const params = new URLSearchParams();
+        if (ex.nameKey) params.set('nameKey', ex.nameKey); else params.set('name', ex.name || '');
+        const resp = await fetch(`${API_URL}/api/workouts/hints?${params.toString()}`, { headers: { 'x-auth-token': token || '' } });
+        const data = await resp.json().catch(() => null);
+        return data?.last || null;
+      }));
+      let changed = false;
+      const next = mapped.map((ex, i) => {
+        const last = results[i];
+        if (!last || (last.weight || 0) <= 0) return ex;
+        changed = true;
+        return { ...ex, sets: ex.sets.map(s => ({ ...s, weight: s.weight > 0 ? s.weight : Number(last.weight) || 0, reps: s.reps > 0 ? s.reps : Number(last.reps) || 0 })) };
+      });
+      if (changed) setExercises(next);
+    } catch { /* non-blocking */ }
   };
 
   const startEditCurrentWorkout = () => {

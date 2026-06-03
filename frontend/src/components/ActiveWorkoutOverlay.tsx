@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown, Pause, Play, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getExerciseType } from '../lib/exerciseMeta';
 
 interface WorkoutSet { set: number; weight: number; reps: number; done: boolean; }
 interface WorkoutExercise { name: string; nameKey?: string; sets: WorkoutSet[]; }
@@ -33,8 +34,9 @@ const ACCENTS = [
   { from: '#22C55E', to: '#4ADE80' },  // green (success)
 ];
 
-// Shared grid template so header + every set row align perfectly
-const ROW = 'grid items-center gap-2.5 grid-cols-[40px_1fr_1fr_52px]';
+// Grid templates: weighted = num|kg|reps|check ; bodyweight/timed = num|reps|check
+const ROW_W = 'grid items-center gap-2.5 grid-cols-[40px_1fr_1fr_52px]';
+const ROW_BW = 'grid items-center gap-2.5 grid-cols-[40px_1fr_52px]';
 
 export default function ActiveWorkoutOverlay({
   workoutName, exercises, elapsed, isMinimized,
@@ -66,6 +68,10 @@ export default function ActiveWorkoutOverlay({
   const pct = totalAll > 0 ? totalDone / totalAll : 0;
   const accent = ACCENTS[exIdx % ACCENTS.length];
   const wUnit = units === 'metric' ? 'кг' : 'lb';
+  const exType = getExerciseType(ex.nameKey, ex.name);
+  const showWeight = exType === 'weighted';
+  const repsLabel = exType === 'timed' ? 'Сек' : 'Повтори';
+  const ROW = showWeight ? ROW_W : ROW_BW;
 
   const handleDone = () => {
     if (activeSetIdx === -1) return;
@@ -179,8 +185,8 @@ export default function ActiveWorkoutOverlay({
         {/* Column header — same grid template as rows */}
         <div className={`${ROW} px-3 pb-2`}>
           <span className="text-[11px] font-semibold apple-text-3 text-center">№</span>
-          <span className="text-[11px] font-semibold apple-text-3 text-center">{wUnit}</span>
-          <span className="text-[11px] font-semibold apple-text-3 text-center">Повтори</span>
+          {showWeight && <span className="text-[11px] font-semibold apple-text-3 text-center">{wUnit}</span>}
+          <span className="text-[11px] font-semibold apple-text-3 text-center">{repsLabel}</span>
           <span />
         </div>
 
@@ -202,15 +208,17 @@ export default function ActiveWorkoutOverlay({
                   style={{ background: isDone ? '#22C55E' : isActive ? `linear-gradient(135deg,${accent.from},${accent.to})` : 'var(--bg-card2)', color: isDone || isActive ? '#fff' : 'var(--text-secondary)' }}>
                   {isDone ? <Check className="w-4 h-4" strokeWidth={3} /> : s.set}
                 </div>
-                {/* Weight */}
-                <input type="number" inputMode="decimal" step="0.5" min={0}
-                  value={s.weight === 0 ? '' : s.weight}
-                  onChange={e => onUpdateSet(exIdx, sIdx, 'weight', e.target.value)}
-                  disabled={locked}
-                  className="w-full h-11 rounded-xl text-center text-lg font-bold apple-text outline-none"
-                  style={{ background: isActive ? `${accent.from}14` : isDone ? '#22C55E12' : 'var(--bg-card2)', border: isActive ? `1px solid ${accent.from}55` : '1px solid transparent' }}
-                  placeholder="0" />
-                {/* Reps */}
+                {/* Weight — only for weighted exercises */}
+                {showWeight && (
+                  <input type="number" inputMode="decimal" step="0.5" min={0}
+                    value={s.weight === 0 ? '' : s.weight}
+                    onChange={e => onUpdateSet(exIdx, sIdx, 'weight', e.target.value)}
+                    disabled={locked}
+                    className="w-full h-11 rounded-xl text-center text-lg font-bold apple-text outline-none"
+                    style={{ background: isActive ? `${accent.from}14` : isDone ? '#22C55E12' : 'var(--bg-card2)', border: isActive ? `1px solid ${accent.from}55` : '1px solid transparent' }}
+                    placeholder="0" />
+                )}
+                {/* Reps (or seconds) */}
                 <input type="number" inputMode="numeric" step="1" min={0}
                   value={s.reps === 0 ? '' : s.reps}
                   onChange={e => onUpdateSet(exIdx, sIdx, 'reps', e.target.value)}

@@ -442,16 +442,37 @@ router.post('/generate', auth, async (req, res) => {
       return acc;
     }, {});
 
-    const pickSome = (pool, count, used) => {
-      const candidates = (pool || []).filter(e => e && e.nameKey && !used.has(e.nameKey));
+    // ── Smart programming knobs ──────────────────────────────────────────────
+    const COMPOUND = new Set([
+      'benchPress', 'squats', 'romanianDeadlift', 'pullups', 'barbellRows',
+      'latPulldown', 'dumbbellPress', 'inclineDumbbellPress', 'lunges',
+      'dumbbellLunges', 'dumbbellCleanPress'
+    ]);
+    const BODYWEIGHT = new Set(['pullups', 'crunches', 'legRaises', 'burpees', 'plank']);
+
+    // Per-goal scheme: sets / rep range / rest (sec)
+    const GOAL_CFG = {
+      mass:     { sets: 4, reps: '8-12',  rest: 90 },
+      strength: { sets: 5, reps: '3-5',   rest: 180 },
+      fat_loss: { sets: 3, reps: '12-15', rest: 45 },
+      upper:    { sets: 4, reps: '8-12',  rest: 75 },
+      lower:    { sets: 4, reps: '8-12',  rest: 90 },
+      fitness:  { sets: 3, reps: '10-12', rest: 60 },
+    };
+    const cfg = GOAL_CFG[goal] || GOAL_CFG.mass;
+    const intensityDelta = intensity === 'high' ? 1 : intensity === 'low' ? -1 : 0;
+    const expDelta = user.experienceLevel === 'advanced' ? 1 : user.experienceLevel === 'beginner' ? -1 : 0;
+    const setsFor = (isCompound) => Math.max(2, Math.min(6, cfg.sets + intensityDelta + expDelta + (isCompound ? 0 : -1)));
+
+    // Pick compounds first, then isolation; deterministic-ish but varied
+    const pickSmart = (pool, count, used) => {
+      const avail = (pool || []).filter(e => e && e.nameKey && !used.has(e.nameKey));
+      avail.sort((a, b) => (COMPOUND.has(b.nameKey) ? 1 : 0) - (COMPOUND.has(a.nameKey) ? 1 : 0) || Math.random() - 0.5);
       const chosen = [];
-      while (candidates.length && chosen.length < count) {
-        const idx = Math.floor(Math.random() * candidates.length);
-        const [picked] = candidates.splice(idx, 1);
-        if (picked && picked.nameKey) {
-          used.add(picked.nameKey);
-          chosen.push(picked);
-        }
+      for (const e of avail) {
+        if (chosen.length >= count) break;
+        used.add(e.nameKey);
+        chosen.push(e);
       }
       return chosen;
     };
@@ -459,18 +480,26 @@ router.post('/generate', auth, async (req, res) => {
     const generated = weekPlan.map(t => {
       const used = new Set();
       const dayExercises = [];
+      const perMuscle = t.muscles.length >= 3 ? 2 : t.muscles.length === 2 ? 3 : 4;
       t.muscles.forEach(m => {
         const pool = byMuscle[m] || (m === 'core' ? byMuscle['abs'] : []) || [];
-        const picked = pickSome(pool, 3, used);
+        const picked = pickSmart(pool, perMuscle, used);
         picked.forEach(ex => {
+          const isCompound = COMPOUND.has(ex.nameKey);
+          const isBw = BODYWEIGHT.has(ex.nameKey);
           dayExercises.push({
             nameKey: ex.nameKey,
-            sets: effectiveSets,
-            reps: repScheme,
+            sets: setsFor(isCompound),
+            // Bodyweight/core → rep targets; strength compounds keep low reps
+            reps: ex.nameKey === 'plank' ? '30-60' : (isBw && goal !== 'strength' ? '12-20' : cfg.reps),
+            rest: isCompound ? cfg.rest : Math.round(cfg.rest * 0.7),
             muscle: m,
+            compound: isCompound,
           });
         });
       });
+      // Order: compounds first within the day
+      dayExercises.sort((a, b) => (b.compound ? 1 : 0) - (a.compound ? 1 : 0));
       return { day: t.day, dayIndex: Number((t.day || '').match(/\d+/)?.[0] || 0) || undefined, exercises: dayExercises };
     });
 
@@ -492,7 +521,14 @@ router.post('/generate', auth, async (req, res) => {
     program.updatedAt = new Date();
     await program.save();
 
-    res.json({ program: generated, meta: { goal, days, intensity } });
+    res.json({
+      program: generated,
+      meta: {
+        goal, days: clampedDays, intensity,
+        scheme: cfg.reps, restSec: cfg.rest,
+        experience: user.experienceLevel || 'beginner',
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server Error' });

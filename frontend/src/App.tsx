@@ -106,7 +106,9 @@ export default function App() {
         {isAuthenticated && showOnboarding ? (
           <OnboardingScreen onComplete={() => { setShowOnboarding(false); setCurrentScreen('dashboard'); }} />
         ) : (
-          renderScreen()
+          <div key={currentScreen} className="w-full h-full animate-fade-in">
+            {renderScreen()}
+          </div>
         )}
         {isAuthenticated && !showOnboarding && !['ai-trainer'].includes(currentScreen) && (
           <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />
