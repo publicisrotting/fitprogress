@@ -87,13 +87,19 @@ const connectDB = async () => {
     console.log('🔄 Switching to In-Memory Local Database (Offline Mode)...');
     
     try {
-      // Start an in-memory MongoDB instance
-      const mongod = await MongoMemoryServer.create();
+      // Persistent local MongoDB — survives server restarts so users/workouts
+      // are not lost in dev. Data stored under backend/.mongo-data.
+      const fs = require('fs');
+      const dbPath = path.join(__dirname, '.mongo-data');
+      if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath, { recursive: true });
+
+      const mongod = await MongoMemoryServer.create({
+        instance: { dbPath, storageEngine: 'wiredTiger', port: 27117 },
+      });
       const uri = mongod.getUri();
-      
+
       await mongoose.connect(uri);
-      console.log('✅ Connected to In-Memory Local MongoDB');
-      console.log('📝 Note: Data is temporary and will be reset when server stops.');
+      console.log('✅ Connected to Local MongoDB (persistent at backend/.mongo-data)');
     } catch (innerErr) {
       console.error('❌ Fatal: Could not connect to any database.', innerErr);
       // Don't exit process, just log error so console stays open

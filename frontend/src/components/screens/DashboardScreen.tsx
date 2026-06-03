@@ -39,7 +39,8 @@ export default function DashboardScreen({ onNavigate }: DashboardScreenProps) {
       const n = Array.isArray(notifData) ? notifData : (notifData?.notifications || []);
       setNotifications(n);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) { logout(); return; }
+      // Stale token after a server/DB reset → bounce to login cleanly
+      if (err instanceof ApiError && (err.status === 401 || err.status === 404)) { logout(); return; }
       setError('Network error');
     } finally { setLoading(false); }
   };
