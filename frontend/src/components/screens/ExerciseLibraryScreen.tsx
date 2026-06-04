@@ -292,7 +292,7 @@ export default function ExerciseLibraryScreen({ onNavigate }: ExerciseLibraryScr
               </button>
             </div>
 
-            <div className="overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+20px)]" style={{ maxHeight: 'calc(80vh - 90px)' }}>
+            <div className="overflow-y-auto px-5" style={{ maxHeight: 'calc(80vh - 90px)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 100px)' }}>
               {workouts.length === 0 ? (
                 <div className="py-10 text-center">
                   <Calendar className="w-10 h-10 apple-text-3 mx-auto mb-3" />
