@@ -30,8 +30,10 @@ export const translations = {
     },
     navigation: {
       home: 'Home',
-      generator: 'Generator',
-      statistics: 'Statistics',
+      diary: 'Diary',
+      generator: 'Generate',
+      coach: 'Coach',
+      statistics: 'Stats',
       profile: 'Profile',
     },
     auth: {
@@ -210,7 +212,7 @@ export const translations = {
     },
     library: {
       title: 'Exercise Library',
-      subtitle: 'exercises with video instructions',
+      subtitle: 'exercises with technique guides',
       searchPlaceholder: 'Search exercises...',
       allMuscles: 'All',
       chest: 'Chest',
@@ -437,6 +439,7 @@ export const translations = {
         fat_loss: 'Weight Loss',
         upper: 'Upper Body',
         lower: 'Lower Body',
+        fitness: 'General Fitness',
       },
       intensities: {
         low: 'Low',
@@ -558,8 +561,10 @@ export const translations = {
     },
     navigation: {
       home: 'Главная',
-      generator: 'Генератор',
-      statistics: 'Статистика',
+      diary: 'Дневник',
+      generator: 'Генерация',
+      coach: 'Тренер',
+      statistics: 'Статс',
       profile: 'Профиль',
     },
     auth: {
@@ -765,7 +770,7 @@ export const translations = {
     },
     library: {
       title: 'Библиотека упражнений',
-      subtitle: 'упражнения с видео инструкциями',
+      subtitle: 'упражнений с техникой выполнения',
       searchPlaceholder: 'Поиск упражнений...',
       allMuscles: 'Все',
       chest: 'Грудь',
@@ -968,6 +973,7 @@ export const translations = {
         fat_loss: 'Похудение',
         upper: 'Верх тела',
         lower: 'Низ тела',
+        fitness: 'Общая физподготовка',
       },
       intensities: {
         low: 'Легкая',
@@ -1090,8 +1096,10 @@ export const translations = {
     },
     navigation: {
       home: 'Головна',
-      generator: 'Генератор',
-      statistics: 'Статистика',
+      diary: 'Щоденник',
+      generator: 'Генерація',
+      coach: 'Тренер',
+      statistics: 'Статс',
       profile: 'Профіль',
     },
     settings: {
@@ -1269,7 +1277,7 @@ export const translations = {
     },
     library: {
       title: 'Бібліотека вправ',
-      subtitle: 'вправи з відео інструкціями',
+      subtitle: 'вправ з технікою виконання',
       searchPlaceholder: 'Пошук вправ...',
       allMuscles: 'Всі',
       chest: 'Груди',
@@ -1495,6 +1503,7 @@ export const translations = {
         fat_loss: 'Схуднення',
         upper: 'Верх тіла',
         lower: 'Низ тіла',
+        fitness: 'Загальна фізпідготовка',
       },
       intensities: {
         low: 'Легка',
@@ -1586,6 +1595,48 @@ export const translations = {
         shoulders: 'Плечи',
         arms: 'Руки',
       }
+    },
+    coach: {
+      title: 'AI Тренер',
+      subtitle: 'Персональні рекомендації',
+      overload: 'Прогресивне навантаження',
+      recovery: 'Відновлення',
+      deload: 'Рекомендація розвантаження',
+      deloadDesc: 'Ви тренуєтесь 4+ тижні поспіль. Розгляньте тиждень зниженого навантаження.',
+      noSuggestions: 'Чудово! Немає активних рекомендацій.',
+      firstWorkout: 'Зробіть перше тренування, щоб отримати рекомендації.',
+      daysSince: 'днів без тренування',
+      trainedToday: 'Ви вже тренувались сьогодні — чудово!',
+      goodRecovery: 'Відмінне відновлення! Готові до тренування.',
+      readyToTrain: 'Пора тренуватись! Ви відпочили достатньо.',
+      longBreak: 'Великий перерва. Починайте з легшого навантаження.',
+      currentWeight: 'Поточна вага',
+      suggestedWeight: 'Рекомендована вага',
+      reps: 'повторень',
+      weeklyVolumeTitle: 'Тижневий обсяг',
+      viewDiary: 'Перейти до щоденника',
+    },
+    onboarding: {
+      welcome: 'Ласкаво просимо до FitProgress',
+      subtitle: 'Розкажіть трохи про себе, щоб ми підібрали оптимальну програму',
+      step1: 'Ваші дані',
+      step2: 'Ціль',
+      step3: 'Досвід',
+      age: 'Вік',
+      weight: 'Вага (кг)',
+      height: 'Зріст (см)',
+      goal: 'Ваша ціль',
+      goalMass: 'Набір маси',
+      goalStrength: 'Сила',
+      goalFatLoss: 'Схуднення',
+      goalFitness: 'Загальна фізична підготовка',
+      experienceLevel: 'Рівень підготовки',
+      beginner: 'Початківець',
+      intermediate: 'Середній',
+      advanced: 'Просунутий',
+      skip: 'Пропустити',
+      next: 'Далі',
+      finish: 'Почати тренування',
     }
   }
 };

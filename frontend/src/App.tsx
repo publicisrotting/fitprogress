@@ -10,6 +10,14 @@ import SocialScreen from './components/screens/SocialScreen';
 import GamificationScreen from './components/screens/GamificationScreen';
 import SettingsScreen from './components/screens/SettingsScreen';
 import WorkoutHistoryScreen from './components/screens/WorkoutHistoryScreen';
+import CoachScreen from './components/screens/CoachScreen';
+import OnboardingScreen from './components/screens/OnboardingScreen';
+import ExerciseProgressScreen from './components/screens/ExerciseProgressScreen';
+import BodyWeightScreen from './components/screens/BodyWeightScreen';
+import WorkoutTemplatesScreen from './components/screens/WorkoutTemplatesScreen';
+import AITrainerScreen from './components/screens/AITrainerScreen';
+import CalendarScreen from './components/screens/CalendarScreen';
+import MuscleRecoveryScreen from './components/screens/MuscleRecoveryScreen';
 import BottomNavigation from './components/BottomNavigation';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -21,11 +29,18 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
   const { isAuthenticated, logout } = useAuth();
   const { theme } = useSettings();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
-      setCurrentScreen('dashboard');
+      const done = localStorage.getItem('onboardingComplete');
+      if (!done) {
+        setShowOnboarding(true);
+      } else {
+        setCurrentScreen('dashboard');
+      }
     } else {
+      setShowOnboarding(false);
       setCurrentScreen('login');
     }
   }, [isAuthenticated]);
@@ -64,6 +79,22 @@ export default function App() {
         return <SettingsScreen onNavigate={setCurrentScreen} onLogout={logout} />;
       case 'history':
         return <WorkoutHistoryScreen onNavigate={setCurrentScreen} />;
+      case 'coach':
+        return <CoachScreen onNavigate={setCurrentScreen} />;
+      case 'exercise-progress':
+        return <ExerciseProgressScreen onNavigate={setCurrentScreen} />;
+      case 'body-weight':
+        return <BodyWeightScreen onNavigate={setCurrentScreen} />;
+      case 'templates':
+        return <WorkoutTemplatesScreen onNavigate={setCurrentScreen} />;
+      case 'ai-trainer':
+        return <AITrainerScreen onNavigate={setCurrentScreen} />;
+      case 'calendar':
+        return <CalendarScreen onNavigate={setCurrentScreen} />;
+      case 'muscle-recovery':
+        return <MuscleRecoveryScreen onNavigate={setCurrentScreen} />;
+      case 'social':
+        return <SocialScreen onNavigate={setCurrentScreen} />;
       default:
         return <DashboardScreen onNavigate={setCurrentScreen} />;
     }
@@ -72,8 +103,16 @@ export default function App() {
   return (
     <div className="h-[100dvh] w-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white overflow-hidden">
       <div id="app-container" className="w-full h-full bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white overflow-hidden relative">
-        {renderScreen()}
-        {isAuthenticated && <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />}
+        {isAuthenticated && showOnboarding ? (
+          <OnboardingScreen onComplete={() => { setShowOnboarding(false); setCurrentScreen('dashboard'); }} />
+        ) : (
+          <div key={currentScreen} className="w-full h-full animate-fade-in">
+            {renderScreen()}
+          </div>
+        )}
+        {isAuthenticated && !showOnboarding && !['ai-trainer'].includes(currentScreen) && (
+          <BottomNavigation currentScreen={currentScreen} onNavigate={setCurrentScreen} />
+        )}
         <Toaster position="top-center" richColors theme={theme} />
       </div>
     </div>

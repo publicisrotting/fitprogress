@@ -280,14 +280,28 @@ router.get('/stats', auth, async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const thisMonthWorkouts = workouts.filter(w => new Date(w.date) >= startOfMonth);
     
-    // Muscle Group Distribution (Simple Keyword Match)
+    // Muscle Group Distribution — prefer nameKey lookup, fall back to keyword match
     const muscleGroups = {
       'Chest': 0, 'Back': 0, 'Legs': 0, 'Shoulders': 0, 'Arms': 0, 'Core': 0
     };
-    
+
+    const nameKeyMuscleMap = {
+      benchPress: 'Chest', inclineDumbbellPress: 'Chest', dumbbellFlyes: 'Chest',
+      pullups: 'Back', barbellRows: 'Back', latPulldown: 'Back', dumbbellRows: 'Back',
+      squats: 'Legs', romanianDeadlift: 'Legs', lunges: 'Legs', dumbbellLunges: 'Legs',
+      dumbbellPress: 'Shoulders', lateralRaises: 'Shoulders', uprightRows: 'Shoulders',
+      bicepCurls: 'Arms', hammerCurls: 'Arms', skullCrushers: 'Arms',
+      plank: 'Core', crunches: 'Core', legRaises: 'Core',
+      burpees: 'Core', dumbbellCleanPress: 'Core',
+    };
+
     workouts.forEach(w => {
       w.exercises.forEach(ex => {
-        const name = ex.name.toLowerCase();
+        if (ex.nameKey && nameKeyMuscleMap[ex.nameKey]) {
+          muscleGroups[nameKeyMuscleMap[ex.nameKey]]++;
+          return;
+        }
+        const name = (ex.name || '').toLowerCase();
         if (name.includes('bench') || name.includes('chest') || name.includes('push up') || name.includes('fly')) muscleGroups['Chest']++;
         else if (name.includes('row') || name.includes('pull') || name.includes('lat') || name.includes('deadlift')) muscleGroups['Back']++;
         else if (name.includes('squat') || name.includes('leg') || name.includes('calf') || name.includes('lunge')) muscleGroups['Legs']++;
@@ -322,6 +336,141 @@ router.get('/stats', auth, async (req, res) => {
 
   } catch (err) {
     console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// @route   GET api/workouts/coach
+// @desc    AI coach: progressive overload suggestions + recovery guidance
+// @access  Private
+router.get('/coach', auth, async (req, res) => {
+  try {
+    const workouts = await Workout.find({ user: req.user.userId })
+      .sort({ date: -1 })
+      .limit(60)
+      .select('date exercises duration');
+
+    if (workouts.length === 0) {
+      return res.json({ suggestions: [], message: 'complete_first_workout' });
+    }
+
+    const now = new Date();
+    const daysSinceLastWorkout = workouts[0]
+      ? Math.floor((now - new Date(workouts[0].date)) / (1000 * 60 * 60 * 24))
+      : 99;
+
+    // Build per-exercise progression map (only real logged sets with weight > 0)
+    const exerciseHistory = {};
+    workouts.forEach(w => {
+      (w.exercises || []).forEach(ex => {
+        const key = ex.nameKey || ex.name;
+        if (!key) return;
+        if (!exerciseHistory[key]) exerciseHistory[key] = [];
+        const maxSet = (ex.sets || []).reduce((best, s) => {
+          const vol = (s.weight || 0) * (s.reps || 0);
+          return vol > best.vol ? { weight: s.weight, reps: s.reps, vol } : best;
+        }, { weight: 0, reps: 0, vol: 0 });
+        if (maxSet.vol > 0) {
+          exerciseHistory[key].push({ date: w.date, weight: maxSet.weight, reps: maxSet.reps });
+        }
+      });
+    });
+
+    const suggestions = [];
+    const hasRealData = Object.keys(exerciseHistory).length > 0;
+
+    // Progressive overload suggestions (need 2+ real sessions)
+    Object.entries(exerciseHistory).forEach(([key, history]) => {
+      if (history.length < 2) return;
+      const [latest, previous] = history;
+      const latestVol = latest.weight * latest.reps;
+      const prevVol = previous.weight * previous.reps;
+      if (latestVol <= prevVol * 1.05) {
+        const suggestedWeight = Math.ceil((latest.weight * 1.025) / 2.5) * 2.5;
+        suggestions.push({
+          type: 'progressive_overload',
+          exercise: key,
+          current: { weight: latest.weight, reps: latest.reps },
+          suggested: { weight: suggestedWeight, reps: latest.reps }
+        });
+      }
+    });
+
+    // Recovery guidance
+    let recoveryMessage = null;
+    if (daysSinceLastWorkout === 0) {
+      recoveryMessage = { type: 'trained_today', severity: 'info' };
+    } else if (daysSinceLastWorkout === 1) {
+      recoveryMessage = { type: 'good_recovery', severity: 'success' };
+    } else if (daysSinceLastWorkout >= 3 && daysSinceLastWorkout <= 5) {
+      recoveryMessage = { type: 'ready_to_train', severity: 'warning' };
+    } else if (daysSinceLastWorkout > 5) {
+      recoveryMessage = { type: 'long_break', severity: 'error', days: daysSinceLastWorkout };
+    }
+
+    // Deload recommendation (if 4+ weeks of consecutive training)
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(now.getDate() - 28);
+    const recentWorkouts = workouts.filter(w => new Date(w.date) >= fourWeeksAgo);
+    let deloadRecommended = false;
+    if (recentWorkouts.length >= 16) {
+      deloadRecommended = true;
+    }
+
+    // Weekly volume tracking
+    const weeklyVolume = {};
+    workouts.forEach(w => {
+      const weekKey = getISOWeek(new Date(w.date));
+      if (!weeklyVolume[weekKey]) weeklyVolume[weekKey] = 0;
+      (w.exercises || []).forEach(ex => {
+        (ex.sets || []).forEach(s => {
+          weeklyVolume[weekKey] += (s.weight || 0) * (s.reps || 0);
+        });
+      });
+    });
+    const weeklyVolumeArray = Object.entries(weeklyVolume)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-8)
+      .map(([week, volume]) => ({ week, volume }));
+
+    // Count planned workouts (weight=0) separately
+    const plannedWorkouts = workouts.filter(w =>
+      (w.exercises || []).every(ex => (ex.sets || []).every(s => (s.weight || 0) === 0))
+    ).length;
+
+    res.json({
+      suggestions: suggestions.slice(0, 5),
+      recovery: recoveryMessage,
+      deloadRecommended,
+      daysSinceLastWorkout,
+      weeklyVolume: weeklyVolumeArray,
+      totalExercisesTracked: Object.keys(exerciseHistory).length,
+      hasRealData,
+      plannedWorkouts,
+      totalWorkouts: workouts.length
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+function getISOWeek(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return `${d.getFullYear()}-W${String(1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7)).padStart(2, '0')}`;
+}
+
+// @route   GET api/workouts/body-weight
+// @desc    Get body weight history from workout notes (if tracked)
+// @access  Private
+router.get('/body-weight', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('weight');
+    res.json({ current: user?.weight || null, history: [] });
+  } catch (err) {
     res.status(500).send('Server Error');
   }
 });

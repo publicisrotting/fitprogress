@@ -55,6 +55,21 @@
       target: 'esnext',
       outDir: path.resolve(__dirname, '../build'),
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'charts': ['recharts'],
+            'ui-radix': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-scroll-area',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-select',
+            ],
+          },
+        },
+      },
     },
     server: {
       host: true,

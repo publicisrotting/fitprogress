@@ -5,7 +5,10 @@ const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { generateCode, sendVerificationCode } = require('../utils/mailer');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+
+const signToken = (userId) => jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -27,16 +30,18 @@ router.post('/google', async (req, res) => {
         user.googleId = googleId;
         user.picture = picture || user.picture;
         user.name = name || user.name;
-        await user.save();
       }
+      user.emailVerified = true; // Google already verified the email
+      await user.save();
     } else {
-      // Create new user
+      // Create new user — Google email is already verified
       user = new User({
         email,
         name,
         picture,
         googleId,
-        password: '' // No password for Google users
+        password: '', // No password for Google users
+        emailVerified: true
       });
       await user.save();
     }
@@ -70,25 +75,28 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Create user — unverified until email code is confirmed
+    const code = generateCode();
     user = new User({
       email,
       password: hashedPassword,
-      name: name || ''
+      name: name || '',
+      emailVerified: false,
+      verifyCode: code,
+      verifyCodeExpires: Date.now() + 10 * 60 * 1000
     });
 
     await user.save();
 
-    // Create token
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({ token, userId: user._id });
+    const sent = await sendVerificationCode(user.email, code);
+    res.status(201).json({
+      requiresVerification: true,
+      email: user.email,
+      // dev fallback when SMTP is not configured so the flow still works
+      devCode: sent.delivered ? undefined : sent.devCode
+    });
   } catch (error) {
-    console.error(error);
+    console.error('REGISTER ERROR:', error);
     res.status(500).json({ message: 'Помилка сервера' });
   }
 });
@@ -110,14 +118,84 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Невірний email або пароль' });
     }
 
-     // Create token
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    // Require a verified email — issue a fresh code and ask to confirm
+    if (!user.emailVerified) {
+      const code = generateCode();
+      user.verifyCode = code;
+      user.verifyCodeExpires = Date.now() + 10 * 60 * 1000;
+      user.verifyAttempts = 0;
+      await user.save();
+      const sent = await sendVerificationCode(user.email, code);
+      return res.json({
+        requiresVerification: true,
+        email: user.email,
+        devCode: sent.delivered ? undefined : sent.devCode
+      });
+    }
 
-    res.json({ token, userId: user._id });
+    res.json({ token: signToken(user._id), userId: user._id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Помилка сервера' });
+  }
+});
+
+// Verify email with 6-digit code
+router.post('/verify-email', async (req, res) => {
+  try {
+    const { email, code } = req.body || {};
+    if (!email || !code) return res.status(400).json({ message: 'Email і код обовʼязкові' });
+
+    const user = await User.findOne({ email: String(email).trim().toLowerCase() });
+    if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
+    if (user.emailVerified) return res.json({ token: signToken(user._id), userId: user._id });
+
+    if (!user.verifyCode || !user.verifyCodeExpires || user.verifyCodeExpires < Date.now()) {
+      return res.status(400).json({ message: 'Код прострочений. Надішліть новий.' });
+    }
+    // Brute-force guard — max 5 attempts per code
+    if ((user.verifyAttempts || 0) >= 5) {
+      user.verifyCode = undefined;
+      user.verifyCodeExpires = undefined;
+      user.verifyAttempts = 0;
+      await user.save();
+      return res.status(429).json({ message: 'Забагато спроб. Надішліть новий код.' });
+    }
+    if (String(code).trim() !== user.verifyCode) {
+      user.verifyAttempts = (user.verifyAttempts || 0) + 1;
+      await user.save();
+      const left = Math.max(0, 5 - user.verifyAttempts);
+      return res.status(400).json({ message: `Невірний код. Залишилось спроб: ${left}` });
+    }
+
+    user.emailVerified = true;
+    user.verifyCode = undefined;
+    user.verifyCodeExpires = undefined;
+    user.verifyAttempts = 0;
+    await user.save();
+
+    res.json({ token: signToken(user._id), userId: user._id });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Помилка сервера' });
+  }
+});
+
+// Resend verification code
+router.post('/resend-code', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    const user = await User.findOne({ email: String(email || '').trim().toLowerCase() });
+    if (!user) return res.status(404).json({ message: 'Користувача не знайдено' });
+    if (user.emailVerified) return res.status(400).json({ message: 'Email вже підтверджено' });
+
+    const code = generateCode();
+    user.verifyCode = code;
+    user.verifyCodeExpires = Date.now() + 10 * 60 * 1000;
+      user.verifyAttempts = 0;
+    await user.save();
+    const sent = await sendVerificationCode(user.email, code);
+    res.json({ ok: true, devCode: sent.delivered ? undefined : sent.devCode });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Помилка сервера' });
@@ -141,8 +219,8 @@ router.post('/forgot-password', async (req, res) => {
 
     await user.save();
 
-    // In a real app, send email here. For now, return token
-    res.json({ message: 'Посилання для відновлення надіслано (симуляція)', resetToken });
+    // In a real app, send email here. Token is NOT returned for security.
+    res.json({ message: 'Посилання для відновлення надіслано (симуляція)' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Помилка сервера' });

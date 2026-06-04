@@ -31,16 +31,27 @@ const userSchema = new mongoose.Schema({
     streak: { type: Number, default: 0 }
   },
   age: { type: Number },
-  gender: { type: String, enum: ['Чоловік', 'Жінка'], default: 'Чоловік' },
+  gender: { type: String, enum: ['Чоловік', 'Жінка', 'male', 'female', 'other'], default: 'Чоловік' },
   weight: { type: Number },
   height: { type: Number },
   goal: { type: String },
+  experienceLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
+  equipment: { type: [String], default: [] },
+  injuries: { type: String, default: '' },
+  bodyWeightHistory: [{
+    date: { type: Date, default: Date.now },
+    weight: Number
+  }],
   createdAt: {
     type: Date,
     default: Date.now
   },
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  emailVerified: { type: Boolean, default: false },
+  verifyCode: String,
+  verifyCodeExpires: Date,
+  verifyAttempts: { type: Number, default: 0 },
   isPremium: {
     type: Boolean,
     default: false

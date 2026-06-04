@@ -13,10 +13,10 @@ if [ ! -d "node_modules" ]; then
 fi
 
 echo "Updating IP Configuration..."
-node scripts/update-ip.js
+node scripts/update-ip.cjs
 
 # Get Local IP
-LOCAL_IP=$(node scripts/get-ip.js)
+LOCAL_IP=$(node scripts/get-ip.cjs)
 echo "Detected IP: $LOCAL_IP"
 
 echo ""

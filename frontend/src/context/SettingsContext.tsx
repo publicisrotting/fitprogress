@@ -68,7 +68,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           if (data.units) setUnitsState(data.units);
         })
         .catch((err) => {
-          if (err instanceof ApiError && err.status === 401) logout();
+          if (err instanceof ApiError && (err.status === 401 || err.status === 404)) logout();
         });
     }
   }, [token, logout]);

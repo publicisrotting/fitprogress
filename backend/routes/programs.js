@@ -207,9 +207,59 @@ router.post('/generate', auth, async (req, res) => {
         ],
       },
     };
+    // Extend templates to support up to 6 days for all goals
+    const extendedMassUk = [
+      'День 1: Груди + Трицепс',
+      'День 2: Спина + Біцепс',
+      'День 3: Ноги + Плечі',
+      'День 4: Верх тіла (повтор)',
+      'День 5: Низ тіла (повтор)',
+      'День 6: Плечі + Кор',
+    ];
+    const extendedMassRu = [
+      'День 1: Грудь + Трицепс',
+      'День 2: Спина + Бицепс',
+      'День 3: Ноги + Плечи',
+      'День 4: Верх тела (повтор)',
+      'День 5: Низ тела (повтор)',
+      'День 6: Плечи + Кор',
+    ];
+    const extendedMassEn = [
+      'Day 1: Chest + Triceps',
+      'Day 2: Back + Biceps',
+      'Day 3: Legs + Shoulders',
+      'Day 4: Upper Body (repeat)',
+      'Day 5: Lower Body (repeat)',
+      'Day 6: Shoulders + Core',
+    ];
+
+    // Replace short mass templates with 6-day versions
+    dayTitles.uk.mass = extendedMassUk;
+    dayTitles.ru.mass = extendedMassRu;
+    dayTitles.en.mass = extendedMassEn;
+
+    // Ensure all goals have at least 6 entries (repeat last day)
+    ['uk', 'ru', 'en'].forEach(l => {
+      Object.keys(dayTitles[l]).forEach(g => {
+        const arr = dayTitles[l][g];
+        while (arr.length < 6) {
+          arr.push(arr[arr.length - 1]);
+        }
+      });
+    });
+
     const chosenLang = dayTitles[lang] ? lang : 'uk';
     const templateDays = dayTitles[chosenLang] && dayTitles[chosenLang][goal] ? dayTitles[chosenLang][goal] : dayTitles['uk'][goal] || dayTitles['uk']['mass'];
-    const weekPlan = (templateDays || []).slice(0, Math.min(days, (templateDays || []).length)).map((d, idx) => {
+    const clampedDays = Math.max(2, Math.min(Number(days) || 3, 6));
+    // Adjust volume based on experience level
+    const experienceSets = {
+      beginner: baseSets - 1,
+      intermediate: baseSets,
+      advanced: baseSets + 1,
+    };
+    const effectiveSets = (experienceSets[user.experienceLevel] || baseSets) + weightFactor;
+
+    const weekPlan = (templateDays || []).slice(0, clampedDays).map((d, idx) => {
       const musclesByGoal = {
         mass: [
           ['chest', 'arms'],
@@ -392,16 +442,37 @@ router.post('/generate', auth, async (req, res) => {
       return acc;
     }, {});
 
-    const pickSome = (pool, count, used) => {
-      const candidates = (pool || []).filter(e => e && e.nameKey && !used.has(e.nameKey));
+    // ── Smart programming knobs ──────────────────────────────────────────────
+    const COMPOUND = new Set([
+      'benchPress', 'squats', 'romanianDeadlift', 'pullups', 'barbellRows',
+      'latPulldown', 'dumbbellPress', 'inclineDumbbellPress', 'lunges',
+      'dumbbellLunges', 'dumbbellCleanPress'
+    ]);
+    const BODYWEIGHT = new Set(['pullups', 'crunches', 'legRaises', 'burpees', 'plank']);
+
+    // Per-goal scheme: sets / rep range / rest (sec)
+    const GOAL_CFG = {
+      mass:     { sets: 4, reps: '8-12',  rest: 90 },
+      strength: { sets: 5, reps: '3-5',   rest: 180 },
+      fat_loss: { sets: 3, reps: '12-15', rest: 45 },
+      upper:    { sets: 4, reps: '8-12',  rest: 75 },
+      lower:    { sets: 4, reps: '8-12',  rest: 90 },
+      fitness:  { sets: 3, reps: '10-12', rest: 60 },
+    };
+    const cfg = GOAL_CFG[goal] || GOAL_CFG.mass;
+    const intensityDelta = intensity === 'high' ? 1 : intensity === 'low' ? -1 : 0;
+    const expDelta = user.experienceLevel === 'advanced' ? 1 : user.experienceLevel === 'beginner' ? -1 : 0;
+    const setsFor = (isCompound) => Math.max(2, Math.min(6, cfg.sets + intensityDelta + expDelta + (isCompound ? 0 : -1)));
+
+    // Pick compounds first, then isolation; deterministic-ish but varied
+    const pickSmart = (pool, count, used) => {
+      const avail = (pool || []).filter(e => e && e.nameKey && !used.has(e.nameKey));
+      avail.sort((a, b) => (COMPOUND.has(b.nameKey) ? 1 : 0) - (COMPOUND.has(a.nameKey) ? 1 : 0) || Math.random() - 0.5);
       const chosen = [];
-      while (candidates.length && chosen.length < count) {
-        const idx = Math.floor(Math.random() * candidates.length);
-        const [picked] = candidates.splice(idx, 1);
-        if (picked && picked.nameKey) {
-          used.add(picked.nameKey);
-          chosen.push(picked);
-        }
+      for (const e of avail) {
+        if (chosen.length >= count) break;
+        used.add(e.nameKey);
+        chosen.push(e);
       }
       return chosen;
     };
@@ -409,18 +480,26 @@ router.post('/generate', auth, async (req, res) => {
     const generated = weekPlan.map(t => {
       const used = new Set();
       const dayExercises = [];
+      const perMuscle = t.muscles.length >= 3 ? 2 : t.muscles.length === 2 ? 3 : 4;
       t.muscles.forEach(m => {
         const pool = byMuscle[m] || (m === 'core' ? byMuscle['abs'] : []) || [];
-        const picked = pickSome(pool, 3, used);
+        const picked = pickSmart(pool, perMuscle, used);
         picked.forEach(ex => {
+          const isCompound = COMPOUND.has(ex.nameKey);
+          const isBw = BODYWEIGHT.has(ex.nameKey);
           dayExercises.push({
             nameKey: ex.nameKey,
-            sets,
-            reps: repScheme,
+            sets: setsFor(isCompound),
+            // Bodyweight/core → rep targets; strength compounds keep low reps
+            reps: ex.nameKey === 'plank' ? '30-60' : (isBw && goal !== 'strength' ? '12-20' : cfg.reps),
+            rest: isCompound ? cfg.rest : Math.round(cfg.rest * 0.7),
             muscle: m,
+            compound: isCompound,
           });
         });
       });
+      // Order: compounds first within the day
+      dayExercises.sort((a, b) => (b.compound ? 1 : 0) - (a.compound ? 1 : 0));
       return { day: t.day, dayIndex: Number((t.day || '').match(/\d+/)?.[0] || 0) || undefined, exercises: dayExercises };
     });
 
@@ -442,7 +521,14 @@ router.post('/generate', auth, async (req, res) => {
     program.updatedAt = new Date();
     await program.save();
 
-    res.json({ program: generated, meta: { goal, days, intensity } });
+    res.json({
+      program: generated,
+      meta: {
+        goal, days: clampedDays, intensity,
+        scheme: cfg.reps, restSec: cfg.rest,
+        experience: user.experienceLevel || 'beginner',
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server Error' });

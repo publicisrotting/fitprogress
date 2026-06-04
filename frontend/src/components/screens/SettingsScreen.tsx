@@ -16,6 +16,36 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
   const { language, setLanguage, theme, toggleTheme, units, setUnits, t } = useSettings();
   const [serverStatus, setServerStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
   const [userData, setUserData] = useState<any>(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pushEnabled');
+    setPushEnabled(saved === 'true');
+  }, []);
+
+  const togglePush = async () => {
+    setPushLoading(true);
+    try {
+      if (!pushEnabled) {
+        if (!('Notification' in window)) { alert('Ваш браузер не підтримує сповіщення'); return; }
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          // Schedule a test notification
+          setTimeout(() => new Notification('FitProgress 💪', { body: 'Push-сповіщення увімкнено! Ми нагадаємо про тренування.', icon: '/icon-192.png' }), 500);
+          setPushEnabled(true);
+          localStorage.setItem('pushEnabled', 'true');
+          // Register a daily reminder (simulated with localStorage)
+          localStorage.setItem('pushSchedule', JSON.stringify({ hour: 10, minute: 0, enabled: true }));
+        } else {
+          alert('Дозвіл на сповіщення відхилено. Змініть в налаштуваннях браузера.');
+        }
+      } else {
+        setPushEnabled(false);
+        localStorage.setItem('pushEnabled', 'false');
+      }
+    } finally { setPushLoading(false); }
+  };
   
   // Modals state
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -134,6 +164,33 @@ export default function SettingsScreen({ onNavigate, onLogout }: SettingsScreenP
       </div>
 
       <div className="relative z-10 px-6 space-y-8 animate-fade-in-up">
+        {/* Push Notifications */}
+        <section>
+          <div className="flex items-center gap-2 mb-4 px-2">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--accent-exercise)' }} />
+            <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">Сповіщення</h3>
+          </div>
+          <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-6 backdrop-blur-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-white/40" />
+                </div>
+                <div>
+                  <p className="text-white font-bold">Push-нотифікації</p>
+                  <p className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">{pushEnabled ? 'Увімкнено — щоденне нагадування' : 'Нагадування про тренування'}</p>
+                </div>
+              </div>
+              <button onClick={togglePush} disabled={pushLoading}
+                className="w-14 h-8 rounded-full transition-all relative disabled:opacity-50"
+                style={{ background: pushEnabled ? 'var(--accent-exercise)' : 'rgba(255,255,255,0.1)' }}>
+                <div className="absolute top-1 w-6 h-6 bg-white rounded-full transition-all shadow-sm"
+                  style={{ left: pushEnabled ? 'calc(100% - 28px)' : '4px' }} />
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Account Settings */}
         <section>
           <div className="flex items-center gap-2 mb-4 px-2">

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Use class-based dark mode (.dark on <html>) instead of OS media query */
+@custom-variant dark (&:is(.dark *));
+
 @layer utilities {
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
@@ -106,47 +109,73 @@
   --color-neutral-50: oklch(.985 0 0);
 }
 
-/* Force body background to be slate-950 for the premium theme */
+/* ── FitProgress Brand Design System (distinct, energetic) ── */
+:root {
+  /* Backgrounds — warm off-white, slightly tinted */
+  --bg-primary:   #F4F3F8;
+  --bg-card:      #FFFFFF;
+  --bg-card2:     #ECEAF3;
+  /* Text */
+  --text-primary:   #16121F;
+  --text-secondary: rgba(40,32,56,0.62);
+  --text-tertiary:  rgba(40,32,56,0.34);
+  /* Separator */
+  --separator:    rgba(40,32,56,0.12);
+  /* ── 3-COLOR BRAND SYSTEM ──────────────────────────── */
+  /* Primary (violet), Accent (coral), Success (green). Nothing else. */
+  --c-primary:  #6D4AFF;   /* violet — brand / primary actions */
+  --c-accent:   #FF6B4A;   /* coral  — energy / highlights / streaks */
+  --c-success:  #22C55E;   /* green  — done / positive */
+  /* All legacy accent vars map onto the 3 brand colors */
+  --accent-move:    var(--c-primary);
+  --accent-stand:   var(--c-primary);
+  --accent-exercise:var(--c-success);
+  --accent-energy:  var(--c-accent);
+  --brand-grad-from:#6D4AFF;
+  --brand-grad-to:  #9A6BFF;
+}
+
+.dark {
+  --bg-primary:   #0C0A14;   /* deep purple-black, not pure black */
+  --bg-card:      #181522;
+  --bg-card2:     #221E30;
+  --text-primary:   #FFFFFF;
+  --text-secondary: rgba(230,226,240,0.62);
+  --text-tertiary:  rgba(230,226,240,0.36);
+  --separator:    rgba(120,110,150,0.22);
+}
+
 body, html, #root {
-  background-color: #f8fafc;
+  background-color: var(--bg-primary);
   min-height: 100vh;
-  color: #0f172a;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.dark body, .dark html, .dark #root {
-  background-color: #020617;
-  color: white;
-}
+/* Apple-style utility classes */
+.apple-bg         { background-color: var(--bg-primary); }
+.apple-card       { background-color: var(--bg-card); }
+.apple-card2      { background-color: var(--bg-card2); }
+.apple-text       { color: var(--text-primary); }
+.apple-text-2     { color: var(--text-secondary); }
+.apple-text-3     { color: var(--text-tertiary); }
+.apple-separator  { border-color: var(--separator); }
+.apple-radius     { border-radius: 16px; }
+.apple-radius-lg  { border-radius: 20px; }
 
-:root:not(.dark) #app-container .bg-slate-950 { background-color: #f8fafc; }
-:root:not(.dark) #app-container .bg-slate-950\/80 { background-color: rgba(255, 255, 255, 0.85); }
-:root:not(.dark) #app-container .bg-slate-900 { background-color: #f1f5f9; }
-:root:not(.dark) #app-container .bg-slate-900\/95 { background-color: rgba(241, 245, 249, 0.95); }
-:root:not(.dark) #app-container .bg-slate-800 { background-color: #e2e8f0; }
-
-:root:not(.dark) #app-container .bg-white\/5 { background-color: rgba(15, 23, 42, 0.05); }
-:root:not(.dark) #app-container .bg-white\/10 { background-color: rgba(15, 23, 42, 0.1); }
-:root:not(.dark) #app-container .bg-white\/20 { background-color: rgba(15, 23, 42, 0.15); }
-:root:not(.dark) #app-container .bg-white\/30 { background-color: rgba(15, 23, 42, 0.2); }
-:root:not(.dark) #app-container .bg-white\/40 { background-color: rgba(15, 23, 42, 0.25); }
-
-:root:not(.dark) #app-container .border-white\/5 { border-color: rgba(15, 23, 42, 0.08); }
-:root:not(.dark) #app-container .border-white\/10 { border-color: rgba(15, 23, 42, 0.12); }
-:root:not(.dark) #app-container .border-white\/20 { border-color: rgba(15, 23, 42, 0.2); }
-
-:root:not(.dark) #app-container .text-white { color: #0f172a; }
-:root:not(.dark) #app-container .text-white\/90 { color: rgba(15, 23, 42, 0.9); }
-:root:not(.dark) #app-container .text-white\/80 { color: rgba(15, 23, 42, 0.8); }
-:root:not(.dark) #app-container .text-white\/70 { color: rgba(15, 23, 42, 0.7); }
-:root:not(.dark) #app-container .text-white\/60 { color: rgba(15, 23, 42, 0.6); }
-:root:not(.dark) #app-container .text-white\/50 { color: rgba(15, 23, 42, 0.5); }
-:root:not(.dark) #app-container .text-white\/40 { color: rgba(15, 23, 42, 0.45); }
-:root:not(.dark) #app-container .text-white\/30 { color: rgba(15, 23, 42, 0.35); }
-:root:not(.dark) #app-container .text-white\/20 { color: rgba(15, 23, 42, 0.25); }
-:root:not(.dark) #app-container .text-white\/10 { color: rgba(15, 23, 42, 0.2); }
-
-:root:not(.dark) #app-container .from-slate-900 { --tw-gradient-from: #f1f5f9 var(--tw-gradient-from-position); --tw-gradient-to: rgba(241, 245, 249, 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-:root:not(.dark) #app-container .to-slate-950 { --tw-gradient-to: #f8fafc var(--tw-gradient-to-position); }
+/* Keep dark-mode overrides for legacy Tailwind classes */
+:root:not(.dark) #app-container .bg-slate-950 { background-color: var(--bg-primary); }
+:root:not(.dark) #app-container .bg-slate-900 { background-color: var(--bg-card2); }
+:root:not(.dark) #app-container .bg-white\/5  { background-color: rgba(0,0,0,0.04); }
+:root:not(.dark) #app-container .bg-white\/10 { background-color: rgba(0,0,0,0.06); }
+:root:not(.dark) #app-container .border-white\/5  { border-color: var(--separator); }
+:root:not(.dark) #app-container .border-white\/10 { border-color: var(--separator); }
+:root:not(.dark) #app-container .text-white      { color: var(--text-primary); }
+:root:not(.dark) #app-container .text-white\/60  { color: var(--text-secondary); }
+:root:not(.dark) #app-container .text-white\/40  { color: var(--text-tertiary); }
+:root:not(.dark) #app-container .text-white\/30  { color: var(--text-tertiary); }
+:root:not(.dark) #app-container .text-white\/20  { color: rgba(60,60,67,0.2); }
 
 @keyframes fade-in {
   from { opacity: 0 }
@@ -234,4 +263,13 @@ body, html, #root {
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
 }
